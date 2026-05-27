@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Run Maven tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: smartops
+          POSTGRES_USER: smartops
+          POSTGRES_PASSWORD: smartops
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U smartops -d smartops"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/smartops
+      SPRING_DATASOURCE_USERNAME: smartops
+      SPRING_DATASOURCE_PASSWORD: smartops
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run tests
+        run: mvn -B clean test
