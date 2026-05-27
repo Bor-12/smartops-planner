@@ -1,12 +1,13 @@
 package com.smartops.planner.skill;
 
+import com.smartops.planner.common.exception.BadRequestException;
+import com.smartops.planner.common.exception.ResourceNotFoundException;
 import com.smartops.planner.skill.dto.CreateSkillRequest;
 import com.smartops.planner.skill.dto.SkillResponse;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class SkillService {
@@ -29,14 +30,14 @@ public class SkillService {
     public SkillResponse findById(Long id) {
         return skillRepository.findById(id)
                 .map(this::toResponse)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Skill not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Skill not found with id " + id));
     }
 
     @Transactional
     public SkillResponse create(CreateSkillRequest request) {
         String name = request.name().trim();
         if (skillRepository.existsByNameIgnoreCase(name)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Skill already exists");
+            throw new BadRequestException("Skill already exists with name " + name, HttpStatus.CONFLICT);
         }
 
         Skill skill = skillRepository.save(new Skill(name));
@@ -46,7 +47,7 @@ public class SkillService {
     @Transactional
     public void deleteById(Long id) {
         if (!skillRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Skill not found");
+            throw new ResourceNotFoundException("Skill not found with id " + id);
         }
 
         skillRepository.deleteById(id);
