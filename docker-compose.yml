@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartops-postgres
+    environment:
+      POSTGRES_DB: smartops
+      POSTGRES_USER: smartops
+      POSTGRES_PASSWORD: smartops
+    ports:
+      - "5432:5432"
+    volumes:
+      - smartops_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  smartops_postgres_data:
