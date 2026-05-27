@@ -48,7 +48,15 @@ public class SecurityConfig {
                                 writeError(response, HttpServletResponse.SC_FORBIDDEN, "Forbidden", request.getRequestURI()))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/health", "/api/auth/**").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/api/health",
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
+                        ).permitAll()
                         .requestMatchers("/api/skills/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER")
