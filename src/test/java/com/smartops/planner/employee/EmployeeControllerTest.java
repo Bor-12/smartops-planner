@@ -1,16 +1,28 @@
 package com.smartops.planner.employee;
 
-import com.smartops.planner.skill.Skill;
-import com.smartops.planner.skill.SkillRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.smartops.planner.common.exception.BadRequestException;
+import com.smartops.planner.common.exception.GlobalExceptionHandler;
+import com.smartops.planner.common.exception.ResourceNotFoundException;
+import com.smartops.planner.employee.dto.CreateEmployeeRequest;
+import com.smartops.planner.employee.dto.EmployeeResponse;
+import com.smartops.planner.employee.dto.UpdateEmployeeRequest;
+import com.smartops.planner.skill.dto.SkillResponse;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,28 +30,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(EmployeeController.class)
+@Import(GlobalExceptionHandler.class)
+@AutoConfigureMockMvc(addFilters = false)
 class EmployeeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private SkillRepository skillRepository;
-
-    @BeforeEach
-    void setUp() {
-        employeeRepository.deleteAll();
-        skillRepository.deleteAll();
-    }
+    @MockitoBean
+    private EmployeeService employeeService;
 
     @Test
     void createsEmployee() throws Exception {
-        Skill java = skillRepository.save(new Skill("Java"));
+        when(employeeService.create(any(CreateEmployeeRequest.class)))
+                .thenReturn(employeeResponse(1L, "Ada Lovelace", "ada@smartops.test", List.of(new SkillResponse(1L, "Java"))));
 
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -50,16 +55,16 @@ class EmployeeControllerTest {
                                   "maxWeeklyHours": 40,
                                   "currentWeeklyHours": 10,
                                   "seniorityLevel": "SENIOR",
-                                  "skillIds": [%d]
+                                  "skillIds": [1]
                                 }
-                                """.formatted(java.getId())))
+                                """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Ada Lovelace"))
                 .andExpect(jsonPath("$.email").value("ada@smartops.test"))
                 .andExpect(jsonPath("$.maxWeeklyHours").value(40))
                 .andExpect(jsonPath("$.currentWeeklyHours").value(10))
                 .andExpect(jsonPath("$.seniorityLevel").value("SENIOR"))
-                .andExpect(jsonPath("$.skills[0].id").value(java.getId().intValue()))
+                .andExpect(jsonPath("$.skills[0].id").value(1))
                 .andExpect(jsonPath("$.skills[0].name").value("Java"));
     }
 
@@ -101,6 +106,9 @@ class EmployeeControllerTest {
 
     @Test
     void rejectsCurrentWeeklyHoursGreaterThanMaxWeeklyHours() throws Exception {
+        when(employeeService.create(any(CreateEmployeeRequest.class)))
+                .thenThrow(new BadRequestException("currentWeeklyHours cannot be greater than maxWeeklyHours"));
+
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -119,6 +127,9 @@ class EmployeeControllerTest {
 
     @Test
     void rejectsUnknownSkill() throws Exception {
+        when(employeeService.create(any(CreateEmployeeRequest.class)))
+                .thenThrow(new BadRequestException("Skill not found with id 999999"));
+
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -137,44 +148,30 @@ class EmployeeControllerTest {
 
     @Test
     void rejectsDuplicateEmail() throws Exception {
-        String requestBody = """
-                {
-                  "name": "Dorothy Vaughan",
-                  "email": "dorothy@smartops.test",
-                  "maxWeeklyHours": 40,
-                  "currentWeeklyHours": 8,
-                  "seniorityLevel": "LEAD",
-                  "skillIds": []
-                }
-                """;
+        when(employeeService.create(any(CreateEmployeeRequest.class)))
+                .thenThrow(new BadRequestException("Employee already exists with email dorothy@smartops.test", HttpStatus.CONFLICT));
 
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(post("/api/employees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content("""
+                                {
+                                  "name": "Dorothy Vaughan",
+                                  "email": "dorothy@smartops.test",
+                                  "maxWeeklyHours": 40,
+                                  "currentWeeklyHours": 8,
+                                  "seniorityLevel": "LEAD",
+                                  "skillIds": []
+                                }
+                                """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Employee already exists with email dorothy@smartops.test"));
     }
 
     @Test
     void listsEmployees() throws Exception {
-        mockMvc.perform(post("/api/employees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Barbara Liskov",
-                                  "email": "barbara@smartops.test",
-                                  "maxWeeklyHours": 35,
-                                  "currentWeeklyHours": 7,
-                                  "seniorityLevel": "LEAD",
-                                  "skillIds": []
-                                }
-                                """))
-                .andExpect(status().isCreated());
+        when(employeeService.findAll()).thenReturn(List.of(
+                employeeResponse(1L, "Barbara Liskov", "barbara@smartops.test", List.of())
+        ));
 
         mockMvc.perform(get("/api/employees"))
                 .andExpect(status().isOk())
@@ -184,22 +181,21 @@ class EmployeeControllerTest {
 
     @Test
     void findsEmployeeById() throws Exception {
-        Employee employee = employeeRepository.save(new Employee(
-                "Evelyn Boyd Granville",
-                "evelyn@smartops.test",
-                40,
-                SeniorityLevel.SENIOR
-        ));
+        when(employeeService.findById(1L))
+                .thenReturn(employeeResponse(1L, "Evelyn Boyd Granville", "evelyn@smartops.test", List.of()));
 
-        mockMvc.perform(get("/api/employees/{id}", employee.getId()))
+        mockMvc.perform(get("/api/employees/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(employee.getId().intValue()))
+                .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Evelyn Boyd Granville"))
                 .andExpect(jsonPath("$.email").value("evelyn@smartops.test"));
     }
 
     @Test
     void returnsNotFoundWhenEmployeeDoesNotExist() throws Exception {
+        when(employeeService.findById(999999L))
+                .thenThrow(new ResourceNotFoundException("Employee not found with id 999999"));
+
         mockMvc.perform(get("/api/employees/999999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
@@ -208,15 +204,18 @@ class EmployeeControllerTest {
 
     @Test
     void updatesEmployee() throws Exception {
-        Skill java = skillRepository.save(new Skill("Java"));
-        Employee employee = employeeRepository.save(new Employee(
-                "Annie Easley",
-                "annie@smartops.test",
-                30,
-                SeniorityLevel.MID
-        ));
+        when(employeeService.update(any(Long.class), any(UpdateEmployeeRequest.class)))
+                .thenReturn(employeeResponse(
+                        1L,
+                        "Annie J. Easley",
+                        "annie.easley@smartops.test",
+                        35,
+                        14,
+                        SeniorityLevel.SENIOR,
+                        List.of(new SkillResponse(1L, "Java"))
+                ));
 
-        mockMvc.perform(put("/api/employees/{id}", employee.getId())
+        mockMvc.perform(put("/api/employees/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -225,11 +224,11 @@ class EmployeeControllerTest {
                                   "maxWeeklyHours": 35,
                                   "currentWeeklyHours": 14,
                                   "seniorityLevel": "SENIOR",
-                                  "skillIds": [%d]
+                                  "skillIds": [1]
                                 }
-                                """.formatted(java.getId())))
+                                """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(employee.getId().intValue()))
+                .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Annie J. Easley"))
                 .andExpect(jsonPath("$.email").value("annie.easley@smartops.test"))
                 .andExpect(jsonPath("$.maxWeeklyHours").value(35))
@@ -240,20 +239,10 @@ class EmployeeControllerTest {
 
     @Test
     void returnsConflictWhenUpdatingEmployeeWithDuplicateEmail() throws Exception {
-        employeeRepository.save(new Employee(
-                "Radia Perlman",
-                "radia@smartops.test",
-                40,
-                SeniorityLevel.LEAD
-        ));
-        Employee employee = employeeRepository.save(new Employee(
-                "Frances Allen",
-                "frances@smartops.test",
-                40,
-                SeniorityLevel.SENIOR
-        ));
+        when(employeeService.update(any(Long.class), any(UpdateEmployeeRequest.class)))
+                .thenThrow(new BadRequestException("Employee already exists with email radia@smartops.test", HttpStatus.CONFLICT));
 
-        mockMvc.perform(put("/api/employees/{id}", employee.getId())
+        mockMvc.perform(put("/api/employees/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -272,22 +261,45 @@ class EmployeeControllerTest {
 
     @Test
     void deletesEmployee() throws Exception {
-        Employee employee = employeeRepository.save(new Employee(
-                "Karen Sparck Jones",
-                "karen@smartops.test",
-                40,
-                SeniorityLevel.SENIOR
-        ));
-
-        mockMvc.perform(delete("/api/employees/{id}", employee.getId()))
+        mockMvc.perform(delete("/api/employees/1"))
                 .andExpect(status().isNoContent());
+
+        verify(employeeService).deleteById(1L);
     }
 
     @Test
     void returnsNotFoundWhenDeletingEmployeeDoesNotExist() throws Exception {
+        doThrow(new ResourceNotFoundException("Employee not found with id 999999"))
+                .when(employeeService)
+                .deleteById(999999L);
+
         mockMvc.perform(delete("/api/employees/999999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Employee not found with id 999999"));
+    }
+
+    private EmployeeResponse employeeResponse(Long id, String name, String email, List<SkillResponse> skills) {
+        return employeeResponse(id, name, email, 40, 10, SeniorityLevel.SENIOR, skills);
+    }
+
+    private EmployeeResponse employeeResponse(
+            Long id,
+            String name,
+            String email,
+            Integer maxWeeklyHours,
+            Integer currentWeeklyHours,
+            SeniorityLevel seniorityLevel,
+            List<SkillResponse> skills
+    ) {
+        return new EmployeeResponse(
+                id,
+                name,
+                email,
+                maxWeeklyHours,
+                currentWeeklyHours,
+                seniorityLevel,
+                skills
+        );
     }
 }
