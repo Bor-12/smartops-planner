@@ -1,0 +1,56 @@
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: smartops-planner
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+jobs:
+  docker-build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compile
+        run: mvn -B -DskipTests package
+
+      - name: Build Docker image
+        run: |
+          if [ -n "$DOCKERHUB_USERNAME" ]; then
+            IMAGE="$DOCKERHUB_USERNAME/$IMAGE_NAME:${GITHUB_SHA}"
+          else
+            IMAGE="$IMAGE_NAME:${GITHUB_SHA}"
+          fi
+
+          mvn -B -DskipTests spring-boot:build-image -Dspring-boot.build-image.imageName="$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Login to Docker Hub
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Push Docker image
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        run: |
+          docker push "$IMAGE"
+          docker tag "$IMAGE" "$DOCKERHUB_USERNAME/$IMAGE_NAME:latest"
+          docker push "$DOCKERHUB_USERNAME/$IMAGE_NAME:latest"
