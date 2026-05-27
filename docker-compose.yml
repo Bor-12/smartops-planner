@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - smartops_postgres_data:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
 
 volumes:
   smartops_postgres_data:
