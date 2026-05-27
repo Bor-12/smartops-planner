@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SmartOps Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <section id="loginView" class="login-shell">
+        <div class="login-panel">
+            <div class="brand-block">
+                <p class="eyebrow">SmartOps Planner</p>
+                <h1>Planificacion operativa con asignacion inteligente</h1>
+                <p class="intro">Accede al panel demo para revisar carga de trabajo, estado de tareas y ejecutar el planificador.</p>
+            </div>
+
+            <form id="loginForm" class="login-form" aria-describedby="loginMessage">
+                <div>
+                    <label for="username">Usuario</label>
+                    <input id="username" name="username" type="text" autocomplete="username" required>
+                </div>
+
+                <div>
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+
+                <button type="submit" class="button primary">Iniciar sesion</button>
+                <p id="loginMessage" class="message" role="status"></p>
+            </form>
+        </div>
+    </section>
+
+    <section id="appView" class="app-shell hidden">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">SmartOps Planner</p>
+                <h1>Dashboard operativo</h1>
+            </div>
+            <div class="session-box">
+                <span id="userBadge" class="user-badge"></span>
+                <button id="logoutButton" type="button" class="button secondary">Cerrar sesion</button>
+            </div>
+        </header>
+
+        <main>
+            <div id="globalMessage" class="message global-message" role="status"></div>
+
+            <section class="section-block" aria-labelledby="metricsTitle">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Resumen</p>
+                        <h2 id="metricsTitle">Estado de planificacion</h2>
+                    </div>
+                    <button id="refreshButton" type="button" class="button secondary">Actualizar</button>
+                </div>
+                <div id="metricCards" class="metric-grid"></div>
+            </section>
+
+            <section class="grid-two">
+                <article class="panel" aria-labelledby="workloadTitle">
+                    <div class="panel-heading">
+                        <h2 id="workloadTitle">Carga semanal por empleado</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Horas</th>
+                                    <th>Capacidad</th>
+                                    <th>Uso</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workloadTableBody"></tbody>
+                        </table>
+                    </div>
+                    <p id="workloadEmpty" class="empty-state hidden">No hay empleados cargados.</p>
+                </article>
+
+                <article class="panel" aria-labelledby="taskStatusTitle">
+                    <div class="panel-heading">
+                        <h2 id="taskStatusTitle">Tareas por estado</h2>
+                    </div>
+                    <div id="taskStatusList" class="status-list"></div>
+                    <p id="taskStatusEmpty" class="empty-state hidden">No hay tareas cargadas.</p>
+                </article>
+            </section>
+
+            <section class="section-block" aria-labelledby="planningTitle">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Planificador</p>
+                        <h2 id="planningTitle">Ejecuciones y asignaciones</h2>
+                    </div>
+                    <button id="runPlanningButton" type="button" class="button primary">Ejecutar planificacion</button>
+                </div>
+
+                <div id="planningSummary" class="run-summary"></div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tarea</th>
+                                <th>Empleado</th>
+                                <th>Score</th>
+                                <th>Asignada</th>
+                                <th>Explicacion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignmentsTableBody"></tbody>
+                    </table>
+                </div>
+                <p id="assignmentsEmpty" class="empty-state hidden">No hay asignaciones todavia. Ejecuta la planificacion para ver resultados.</p>
+            </section>
+        </main>
+    </section>
+</body>
+</html>
