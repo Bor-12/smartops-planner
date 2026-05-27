@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -54,6 +55,14 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return buildResponse(exception.getStatus(), exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(
+            AuthenticationException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid credentials", request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
