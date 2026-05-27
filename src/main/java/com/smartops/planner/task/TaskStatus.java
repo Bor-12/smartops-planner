@@ -1,7 +1,7 @@
 package com.smartops.planner.task;
 
 public enum TaskStatus {
-    TODO,
+    PENDING,
     IN_PROGRESS,
     DONE,
     CANCELLED

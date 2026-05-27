@@ -1,33 +1,79 @@
-HELP.md
+# Build outputs
 target/
-.mvn/wrapper/maven-wrapper.jar
+build/
+out/
+bin/
+*.class
+
+# Keep nested build folders if they are intentionally placed under source trees
 !**/src/main/**/target/
 !**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+.mvn/wrapper/MavenWrapperDownloader.java
 
-### IntelliJ IDEA ###
-.idea
+# Logs
+logs/
+*.log
+*.log.*
+hs_err_pid*
+replay_pid*
+
+# Spring Boot local configuration
+HELP.md
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-*.local.yml
+application-*.local.yaml
+
+# IDEs and editors
+.idea/
 *.iws
 *.iml
 *.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.apt_generated/
+.apt_generated_tests/
+.springBeans
+.sts4-cache/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Test and coverage reports
+coverage/
+.coverage
+jacoco.exec
+
+# Local Docker/database data if created inside the repository
+docker-data/
+postgres-data/
+pgdata/

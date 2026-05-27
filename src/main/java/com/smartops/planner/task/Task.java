@@ -46,7 +46,7 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private TaskStatus status = TaskStatus.TODO;
+    private TaskStatus status = TaskStatus.PENDING;
 
     @ManyToMany
     @JoinTable(
