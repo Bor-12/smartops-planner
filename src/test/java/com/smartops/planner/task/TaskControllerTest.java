@@ -18,10 +18,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,9 +41,42 @@ class TaskControllerTest {
     private TaskService taskService;
 
     @Test
+    void findAll_shouldReturnTasks() throws Exception {
+        when(taskService.findAll()).thenReturn(List.of(
+                taskResponse(1L, "Build planning API", TaskStatus.PENDING),
+                taskResponse(2L, "Write task tests", TaskStatus.IN_PROGRESS)
+        ));
+
+        mockMvc.perform(get("/api/tasks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Build planning API"))
+                .andExpect(jsonPath("$[0].status").value("PENDING"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].title").value("Write task tests"))
+                .andExpect(jsonPath("$[1].status").value("IN_PROGRESS"));
+
+        verify(taskService).findAll();
+    }
+
+    @Test
+    void findById_shouldReturnTask_whenTaskExists() throws Exception {
+        when(taskService.findById(1L))
+                .thenReturn(taskResponse(1L, "Build planning API", TaskStatus.PENDING));
+
+        mockMvc.perform(get("/api/tasks/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("Build planning API"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+
+        verify(taskService).findById(1L);
+    }
+
+    @Test
     void create_shouldCreateTask() throws Exception {
         when(taskService.create(any(CreateTaskRequest.class)))
-                .thenReturn(taskResponse(TaskStatus.PENDING));
+                .thenReturn(taskResponse(1L, "Build planning API", TaskStatus.PENDING));
 
         mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,7 +138,7 @@ class TaskControllerTest {
     @Test
     void updateStatus_shouldChangeStatus() throws Exception {
         when(taskService.updateStatus(any(Long.class), any(UpdateTaskStatusRequest.class)))
-                .thenReturn(taskResponse(TaskStatus.IN_PROGRESS));
+                .thenReturn(taskResponse(1L, "Build planning API", TaskStatus.IN_PROGRESS));
 
         mockMvc.perform(patch("/api/tasks/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -113,6 +150,29 @@ class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
+    @Test
+    void update_shouldUpdateTask() throws Exception {
+        when(taskService.update(any(Long.class), any()))
+                .thenReturn(taskResponse(1L, "Updated planning API", TaskStatus.PENDING));
+
+        mockMvc.perform(put("/api/tasks/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Updated planning API",
+                                  "description": "Updated description",
+                                  "priority": "URGENT",
+                                  "estimatedHours": 8,
+                                  "deadline": "2026-06-20",
+                                  "requiredSkillIds": []
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("Updated planning API"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 
     @Test
@@ -161,10 +221,30 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.message").value("Task not found with id 99"));
     }
 
-    private TaskResponse taskResponse(TaskStatus status) {
+    @Test
+    void deleteById_shouldReturnNoContent_whenTaskExists() throws Exception {
+        mockMvc.perform(delete("/api/tasks/1"))
+                .andExpect(status().isNoContent());
+
+        verify(taskService).deleteById(1L);
+    }
+
+    @Test
+    void deleteById_shouldReturnNotFound_whenTaskDoesNotExist() throws Exception {
+        doThrow(new ResourceNotFoundException("Task not found with id 99"))
+                .when(taskService)
+                .deleteById(99L);
+
+        mockMvc.perform(delete("/api/tasks/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Task not found with id 99"));
+    }
+
+    private TaskResponse taskResponse(Long id, String title, TaskStatus status) {
         return new TaskResponse(
-                1L,
-                "Build planning API",
+                id,
+                title,
                 "Create task endpoints",
                 TaskPriority.HIGH,
                 6,

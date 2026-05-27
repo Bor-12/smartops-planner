@@ -40,6 +40,54 @@ class TaskServiceTest {
     private TaskService taskService;
 
     @Test
+    void findAll_shouldReturnAllTasks() {
+        Task firstTask = task(1L);
+        Task secondTask = new Task("Write task tests", TaskPriority.MEDIUM, 3);
+        secondTask.setDeadline(LocalDate.of(2026, 6, 16));
+        ReflectionTestUtils.setField(secondTask, "id", 2L);
+
+        when(taskRepository.findAll()).thenReturn(List.of(firstTask, secondTask));
+
+        List<TaskResponse> responses = taskService.findAll();
+
+        assertEquals(2, responses.size());
+        assertEquals(1L, responses.get(0).id());
+        assertEquals("Build planning API", responses.get(0).title());
+        assertEquals(2L, responses.get(1).id());
+        assertEquals("Write task tests", responses.get(1).title());
+
+        verify(taskRepository).findAll();
+    }
+
+    @Test
+    void findById_shouldReturnTask_whenTaskExists() {
+        Task task = task(1L);
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+
+        TaskResponse response = taskService.findById(1L);
+
+        assertEquals(1L, response.id());
+        assertEquals("Build planning API", response.title());
+        assertEquals(TaskStatus.PENDING, response.status());
+
+        verify(taskRepository).findById(1L);
+    }
+
+    @Test
+    void findById_shouldThrowResourceNotFoundException_whenTaskDoesNotExist() {
+        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> taskService.findById(99L)
+        );
+
+        assertEquals("Task not found with id 99", exception.getMessage());
+        verify(taskRepository).findById(99L);
+    }
+
+    @Test
     void create_shouldCreateTask_whenDataIsValid() {
         Skill java = skill(10L, "Java");
         CreateTaskRequest request = validCreateRequest(Set.of(10L));
