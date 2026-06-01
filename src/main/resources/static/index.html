@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SmartOps Planner</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/app.js"></script>
 </head>
 <body>
     <section id="loginView" class="login-shell">
@@ -13,16 +13,16 @@
             <div class="brand-block">
                 <p class="eyebrow">SmartOps Planner</p>
                 <h1>Planificacion operativa con asignacion inteligente</h1>
-                <p class="intro">Accede al panel demo para revisar carga de trabajo, estado de tareas y ejecutar el planificador.</p>
+                <p class="intro">Accede al panel para revisar carga de trabajo, tareas y resultados de planificacion.</p>
             </div>
 
             <form id="loginForm" class="login-form" aria-describedby="loginMessage">
-                <div>
+                <div class="field">
                     <label for="username">Usuario</label>
                     <input id="username" name="username" type="text" autocomplete="username" required>
                 </div>
 
-                <div>
+                <div class="field">
                     <label for="password">Password</label>
                     <input id="password" name="password" type="password" autocomplete="current-password" required>
                 </div>
@@ -34,89 +34,246 @@
     </section>
 
     <section id="appView" class="app-shell hidden">
-        <header class="topbar">
-            <div>
-                <p class="eyebrow">SmartOps Planner</p>
-                <h1>Dashboard operativo</h1>
-            </div>
-            <div class="session-box">
-                <span id="userBadge" class="user-badge"></span>
-                <button id="logoutButton" type="button" class="button secondary">Cerrar sesion</button>
-            </div>
-        </header>
-
-        <main>
-            <div id="globalMessage" class="message global-message" role="status"></div>
-
-            <section class="section-block" aria-labelledby="metricsTitle">
-                <div class="section-heading">
-                    <div>
-                        <p class="eyebrow">Resumen</p>
-                        <h2 id="metricsTitle">Estado de planificacion</h2>
-                    </div>
-                    <button id="refreshButton" type="button" class="button secondary">Actualizar</button>
+        <aside class="sidebar" aria-label="Navegacion principal">
+            <div class="brand-mini">
+                <span class="brand-mark">S</span>
+                <div>
+                    <strong>SmartOps</strong>
+                    <span>Planner</span>
                 </div>
-                <div id="metricCards" class="metric-grid"></div>
-            </section>
+            </div>
 
-            <section class="grid-two">
-                <article class="panel" aria-labelledby="workloadTitle">
-                    <div class="panel-heading">
-                        <h2 id="workloadTitle">Carga semanal por empleado</h2>
+            <nav class="nav-menu">
+                <button type="button" class="nav-link active" data-view-target="overviewView">Resumen</button>
+                <button type="button" class="nav-link" data-view-target="usersView">Usuarios</button>
+                <button type="button" class="nav-link" data-view-target="teamView">Empleados</button>
+                <button type="button" class="nav-link" data-view-target="tasksView">Tareas</button>
+                <button type="button" class="nav-link" data-view-target="myTasksView">Mis tareas</button>
+                <button type="button" class="nav-link" data-view-target="planningView">Planificacion</button>
+            </nav>
+        </aside>
+
+        <div class="workspace">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">Panel operativo</p>
+                    <h1 id="pageTitle">Resumen</h1>
+                </div>
+                <div class="session-box">
+                    <span id="userBadge" class="user-badge"></span>
+                    <button id="logoutButton" type="button" class="button ghost">Cerrar sesion</button>
+                </div>
+            </header>
+
+            <main>
+                <div id="globalMessage" class="message global-message" role="status"></div>
+
+                <section id="overviewView" class="view active" aria-labelledby="overviewTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Resumen</p>
+                            <h2 id="overviewTitle">Estado de planificacion</h2>
+                        </div>
                     </div>
+                    <div id="metricCards" class="metric-grid"></div>
+                    <div id="planningSummary" class="summary-strip"></div>
+                </section>
+
+                <section id="usersView" class="view" aria-labelledby="usersTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Accesos</p>
+                            <h2 id="usersTitle">Usuarios y permisos</h2>
+                        </div>
+                    </div>
+                    <div id="permissionsGrid" class="permissions-grid"></div>
+                    <form id="createUserForm" class="form-panel">
+                        <div class="field">
+                            <label for="newUsername">Usuario</label>
+                            <input id="newUsername" name="username" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label for="newUserPassword">Password</label>
+                            <input id="newUserPassword" name="password" type="password" minlength="8" required>
+                        </div>
+                        <div class="field">
+                            <label for="newUserRole">Rol</label>
+                            <select id="newUserRole" name="role" required>
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="MANAGER">MANAGER</option>
+                                <option value="EMPLOYEE">EMPLOYEE</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="button primary">Crear usuario</button>
+                    </form>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Puede hacer</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                    <p id="usersEmpty" class="empty-state hidden">No hay usuarios cargados.</p>
+                </section>
+
+                <section id="teamView" class="view" aria-labelledby="teamTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Empleados</p>
+                            <h2 id="teamTitle">Empleados y carga semanal</h2>
+                        </div>
+                    </div>
+                    <form id="createEmployeeForm" class="form-panel">
+                        <div class="field">
+                            <label for="employeeName">Nombre</label>
+                            <input id="employeeName" name="name" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label for="employeeEmail">Email</label>
+                            <input id="employeeEmail" name="email" type="email" required>
+                        </div>
+                        <div class="field">
+                            <label for="employeeMaxHours">Horas max.</label>
+                            <input id="employeeMaxHours" name="maxWeeklyHours" type="number" min="1" value="40" required>
+                        </div>
+                        <div class="field">
+                            <label for="employeeCurrentHours">Horas actuales</label>
+                            <input id="employeeCurrentHours" name="currentWeeklyHours" type="number" min="0" value="0" required>
+                        </div>
+                        <div class="field">
+                            <label for="employeeSeniority">Seniority</label>
+                            <select id="employeeSeniority" name="seniorityLevel" required>
+                                <option value="JUNIOR">JUNIOR</option>
+                                <option value="MID">MID</option>
+                                <option value="SENIOR">SENIOR</option>
+                                <option value="LEAD">LEAD</option>
+                            </select>
+                        </div>
+                        <div class="field wide">
+                            <label>Skills</label>
+                            <div id="employeeSkillOptions" class="checkbox-grid"></div>
+                        </div>
+                        <button type="submit" class="button primary">Crear empleado</button>
+                    </form>
                     <div class="table-wrap">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Empleado</th>
+                                    <th>Seniority</th>
+                                    <th>Skills</th>
                                     <th>Horas</th>
-                                    <th>Capacidad</th>
                                     <th>Uso</th>
                                 </tr>
                             </thead>
-                            <tbody id="workloadTableBody"></tbody>
+                            <tbody id="employeesTableBody"></tbody>
                         </table>
                     </div>
-                    <p id="workloadEmpty" class="empty-state hidden">No hay empleados cargados.</p>
-                </article>
+                    <p id="employeesEmpty" class="empty-state hidden">No hay empleados cargados.</p>
+                </section>
 
-                <article class="panel" aria-labelledby="taskStatusTitle">
-                    <div class="panel-heading">
-                        <h2 id="taskStatusTitle">Tareas por estado</h2>
+                <section id="tasksView" class="view" aria-labelledby="taskStatusTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Tareas</p>
+                            <h2 id="taskStatusTitle">Tareas actuales</h2>
+                        </div>
                     </div>
+                    <form id="createTaskForm" class="form-panel">
+                        <div class="field wide">
+                            <label for="taskTitle">Titulo</label>
+                            <input id="taskTitle" name="title" type="text" required>
+                        </div>
+                        <div class="field wide">
+                            <label for="taskDescription">Descripcion</label>
+                            <input id="taskDescription" name="description" type="text">
+                        </div>
+                        <div class="field">
+                            <label for="taskPriority">Prioridad</label>
+                            <select id="taskPriority" name="priority" required>
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM">MEDIUM</option>
+                                <option value="HIGH">HIGH</option>
+                                <option value="URGENT">URGENT</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="taskHours">Horas</label>
+                            <input id="taskHours" name="estimatedHours" type="number" min="1" value="4" required>
+                        </div>
+                        <div class="field">
+                            <label for="taskDeadline">Deadline</label>
+                            <input id="taskDeadline" name="deadline" type="date" required>
+                        </div>
+                        <div class="field wide">
+                            <label>Skills requeridas</label>
+                            <div id="taskSkillOptions" class="checkbox-grid"></div>
+                        </div>
+                        <button type="submit" class="button primary">Crear tarea</button>
+                    </form>
                     <div id="taskStatusList" class="status-list"></div>
                     <p id="taskStatusEmpty" class="empty-state hidden">No hay tareas cargadas.</p>
-                </article>
-            </section>
-
-            <section class="section-block" aria-labelledby="planningTitle">
-                <div class="section-heading">
-                    <div>
-                        <p class="eyebrow">Planificador</p>
-                        <h2 id="planningTitle">Ejecuciones y asignaciones</h2>
+                    <div class="table-wrap table-spaced">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tarea</th>
+                                    <th>Prioridad</th>
+                                    <th>Estado</th>
+                                    <th>Horas</th>
+                                    <th>Deadline</th>
+                                    <th>Skills</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBody"></tbody>
+                        </table>
                     </div>
-                    <button id="runPlanningButton" type="button" class="button primary">Ejecutar planificacion</button>
-                </div>
+                    <p id="tasksEmpty" class="empty-state hidden">No hay tareas creadas.</p>
+                </section>
 
-                <div id="planningSummary" class="run-summary"></div>
+                <section id="planningView" class="view" aria-labelledby="planningTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Planificador</p>
+                            <h2 id="planningTitle">Ejecuciones y asignaciones</h2>
+                        </div>
+                        <button id="runPlanningButton" type="button" class="button primary">Ejecutar planificacion</button>
+                    </div>
 
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tarea</th>
-                                <th>Empleado</th>
-                                <th>Score</th>
-                                <th>Asignada</th>
-                                <th>Explicacion</th>
-                            </tr>
-                        </thead>
-                        <tbody id="assignmentsTableBody"></tbody>
-                    </table>
-                </div>
-                <p id="assignmentsEmpty" class="empty-state hidden">No hay asignaciones todavia. Ejecuta la planificacion para ver resultados.</p>
-            </section>
-        </main>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tarea</th>
+                                    <th>Empleado</th>
+                                    <th>Score</th>
+                                    <th>Asignada</th>
+                                    <th>Explicacion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignmentsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <p id="assignmentsEmpty" class="empty-state hidden">No hay asignaciones todavia. Ejecuta la planificacion para ver resultados.</p>
+                </section>
+
+                <section id="myTasksView" class="view" aria-labelledby="myTasksTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Empleado</p>
+                            <h2 id="myTasksTitle">Mis tareas asignadas</h2>
+                        </div>
+                    </div>
+                    <div id="myTasksList" class="task-card-grid"></div>
+                    <p id="myTasksEmpty" class="empty-state hidden">No tienes tareas asignadas todavia.</p>
+                </section>
+            </main>
+        </div>
     </section>
 </body>
 </html>
