@@ -7,6 +7,8 @@ import com.smartops.planner.planning.AssignmentRepository;
 import com.smartops.planner.planning.PlanningRunRepository;
 import com.smartops.planner.skill.SkillRepository;
 import com.smartops.planner.task.TaskRepository;
+import com.smartops.planner.user.Role;
+import com.smartops.planner.user.User;
 import com.smartops.planner.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,6 +54,9 @@ class SecurityIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private SkillRepository skillRepository;
 
     @Autowired
@@ -82,16 +88,28 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    void register_shouldCreateUserAndReturnToken() throws Exception {
-        String token = register("manager.integration", "password123", "MANAGER");
+    void admin_shouldCreateUser() throws Exception {
+        createUser("admin.integration", "password123", Role.ADMIN);
+        String adminToken = login("admin.integration", "password123");
 
-        assertThat(token).isNotBlank();
-        assertThat(userRepository.existsByUsernameIgnoreCase("manager.integration")).isTrue();
+        mockMvc.perform(post("/api/users")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "employee.created",
+                                  "password": "password123",
+                                  "role": "EMPLOYEE"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        assertThat(userRepository.existsByUsernameIgnoreCase("employee.created")).isTrue();
     }
 
     @Test
     void login_shouldReturnToken_whenCredentialsAreValid() throws Exception {
-        register("manager.integration", "password123", "MANAGER");
+        createUser("manager.integration", "password123", Role.MANAGER);
 
         String token = login("manager.integration", "password123");
 
@@ -100,7 +118,7 @@ class SecurityIntegrationTest {
 
     @Test
     void dashboard_shouldAllowManagerToken() throws Exception {
-        register("manager.integration", "password123", "MANAGER");
+        createUser("manager.integration", "password123", Role.MANAGER);
         String managerToken = login("manager.integration", "password123");
 
         mockMvc.perform(get("/api/dashboard/planning-summary")
@@ -110,7 +128,8 @@ class SecurityIntegrationTest {
 
     @Test
     void dashboard_shouldReturnForbidden_withEmployeeToken() throws Exception {
-        String employeeToken = register("employee.integration", "password123", "EMPLOYEE");
+        createUser("employee.integration", "password123", Role.EMPLOYEE);
+        String employeeToken = login("employee.integration", "password123");
 
         mockMvc.perform(get("/api/dashboard/planning-summary")
                         .header("Authorization", "Bearer " + employeeToken))
@@ -119,7 +138,7 @@ class SecurityIntegrationTest {
 
     @Test
     void planningRun_shouldAllowManagerToken() throws Exception {
-        register("manager.integration", "password123", "MANAGER");
+        createUser("manager.integration", "password123", Role.MANAGER);
         String managerToken = login("manager.integration", "password123");
 
         mockMvc.perform(post("/api/planning/run")
@@ -129,29 +148,16 @@ class SecurityIntegrationTest {
 
     @Test
     void planningRun_shouldReturnForbidden_withEmployeeToken() throws Exception {
-        String employeeToken = register("employee.integration", "password123", "EMPLOYEE");
+        createUser("employee.integration", "password123", Role.EMPLOYEE);
+        String employeeToken = login("employee.integration", "password123");
 
         mockMvc.perform(post("/api/planning/run")
                         .header("Authorization", "Bearer " + employeeToken))
                 .andExpect(status().isForbidden());
     }
 
-    private String register(String username, String password, String role) throws Exception {
-        String response = mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "username": "%s",
-                                  "password": "%s",
-                                  "role": "%s"
-                                }
-                                """.formatted(username, password, role)))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        return tokenFrom(response);
+    private void createUser(String username, String password, Role role) {
+        userRepository.save(new User(username, passwordEncoder.encode(password), role));
     }
 
     private String login(String username, String password) throws Exception {

@@ -51,18 +51,20 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
-                                "/styles.css",
-                                "/app.js",
+                                "/css/**",
+                                "/js/**",
                                 "/api/health",
-                                "/api/auth/**",
+                                "/api/auth/login",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml"
                         ).permitAll()
+                        .requestMatchers("/api/auth/register").hasRole("ADMIN")
                         .requestMatchers("/api/skills/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/planning/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/dashboard/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/my-tasks/**").hasRole("EMPLOYEE")
