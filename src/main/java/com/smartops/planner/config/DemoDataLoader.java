@@ -57,8 +57,14 @@ public class DemoDataLoader implements CommandLineRunner {
         createUserIfMissing("admin", Role.ADMIN);
         createUserIfMissing("manager", Role.MANAGER);
         createUserIfMissing("employee", Role.EMPLOYEE);
-        createUserIfMissing("operations.manager", Role.MANAGER);
-        createUserIfMissing("team.lead", Role.MANAGER);
+        createUserIfMissing("laura.sanchez", Role.MANAGER);
+        createUserIfMissing("miguel.torres", Role.MANAGER);
+        createUserIfMissing("ana.garcia", Role.EMPLOYEE);
+        createUserIfMissing("carlos.martin", Role.EMPLOYEE);
+        createUserIfMissing("marta.lopez", Role.EMPLOYEE);
+        createUserIfMissing("david.romero", Role.EMPLOYEE);
+        createUserIfMissing("elena.navarro", Role.EMPLOYEE);
+        createUserIfMissing("pablo.ruiz", Role.EMPLOYEE);
 
         Map<String, Skill> skills = createSkills();
         createEmployees(skills);
@@ -107,8 +113,8 @@ public class DemoDataLoader implements CommandLineRunner {
 
     private void createEmployees(Map<String, Skill> skills) {
         createEmployeeIfMissing(
-                "Ada Lovelace",
-                "ada@smartops.demo",
+                "Ana Garcia",
+                "ana.garcia@smartops.demo",
                 40,
                 10,
                 SeniorityLevel.SENIOR,
@@ -120,8 +126,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "JPA"
         );
         createEmployeeIfMissing(
-                "Grace Hopper",
-                "grace@smartops.demo",
+                "Carlos Martin",
+                "carlos.martin@smartops.demo",
                 35,
                 22,
                 SeniorityLevel.SENIOR,
@@ -132,8 +138,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "REST API"
         );
         createEmployeeIfMissing(
-                "Margaret Hamilton",
-                "margaret@smartops.demo",
+                "Marta Lopez",
+                "marta.lopez@smartops.demo",
                 40,
                 18,
                 SeniorityLevel.SENIOR,
@@ -144,8 +150,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Java"
         );
         createEmployeeIfMissing(
-                "Martin Fowler",
-                "martin@smartops.demo",
+                "Javier Moreno",
+                "javier.moreno@smartops.demo",
                 32,
                 24,
                 SeniorityLevel.SENIOR,
@@ -156,8 +162,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Documentation"
         );
         createEmployeeIfMissing(
-                "Linus Torvalds",
-                "linus@smartops.demo",
+                "David Romero",
+                "david.romero@smartops.demo",
                 40,
                 32,
                 SeniorityLevel.MID,
@@ -168,8 +174,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Monitoring"
         );
         createEmployeeIfMissing(
-                "Barbara Liskov",
-                "barbara@smartops.demo",
+                "Elena Navarro",
+                "elena.navarro@smartops.demo",
                 38,
                 20,
                 SeniorityLevel.MID,
@@ -180,8 +186,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Testing"
         );
         createEmployeeIfMissing(
-                "Ken Thompson",
-                "ken@smartops.demo",
+                "Pablo Ruiz",
+                "pablo.ruiz@smartops.demo",
                 35,
                 30,
                 SeniorityLevel.MID,
@@ -191,8 +197,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Monitoring"
         );
         createEmployeeIfMissing(
-                "Sophie Wilson",
-                "sophie@smartops.demo",
+                "Lucia Fernandez",
+                "lucia.fernandez@smartops.demo",
                 40,
                 12,
                 SeniorityLevel.MID,
@@ -203,8 +209,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "UX"
         );
         createEmployeeIfMissing(
-                "Radia Perlman",
-                "radia@smartops.demo",
+                "Raquel Serrano",
+                "raquel.serrano@smartops.demo",
                 40,
                 28,
                 SeniorityLevel.MID,
@@ -214,8 +220,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "CI/CD"
         );
         createEmployeeIfMissing(
-                "Junior Developer",
-                "junior@smartops.demo",
+                "Sergio Prieto",
+                "sergio.prieto@smartops.demo",
                 30,
                 8,
                 SeniorityLevel.JUNIOR,
@@ -224,8 +230,19 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Testing"
         );
         createEmployeeIfMissing(
-                "Alex Frontend",
-                "alex.frontend@smartops.demo",
+                "Nuria Campos",
+                "employee@smartops.demo",
+                30,
+                6,
+                SeniorityLevel.JUNIOR,
+                skills,
+                "Java",
+                "Testing",
+                "Documentation"
+        );
+        createEmployeeIfMissing(
+                "Alvaro Vega",
+                "alvaro.vega@smartops.demo",
                 30,
                 14,
                 SeniorityLevel.JUNIOR,
@@ -235,8 +252,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "JavaScript"
         );
         createEmployeeIfMissing(
-                "Nora Data",
-                "nora.data@smartops.demo",
+                "Irene Molina",
+                "irene.molina@smartops.demo",
                 30,
                 10,
                 SeniorityLevel.JUNIOR,
@@ -246,8 +263,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Reporting"
         );
         createEmployeeIfMissing(
-                "Diego DevOps",
-                "diego.devops@smartops.demo",
+                "Diego Herrera",
+                "diego.herrera@smartops.demo",
                 30,
                 26,
                 SeniorityLevel.JUNIOR,
@@ -256,8 +273,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "GitHub Actions"
         );
         createEmployeeIfMissing(
-                "Carla QA",
-                "carla.qa@smartops.demo",
+                "Carla Medina",
+                "carla.medina@smartops.demo",
                 32,
                 16,
                 SeniorityLevel.JUNIOR,
@@ -266,8 +283,8 @@ public class DemoDataLoader implements CommandLineRunner {
                 "Documentation"
         );
         createEmployeeIfMissing(
-                "Elena Product",
-                "elena.product@smartops.demo",
+                "Belen Ortega",
+                "belen.ortega@smartops.demo",
                 35,
                 18,
                 SeniorityLevel.MID,
@@ -306,7 +323,7 @@ public class DemoDataLoader implements CommandLineRunner {
 
         createTaskIfMissing(
                 existingTaskTitles,
-                "Harden JWT security",
+                "Reforzar seguridad del acceso",
                 TaskPriority.HIGH,
                 5,
                 LocalDate.now().plusDays(3),
@@ -316,7 +333,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Fix production dashboard issue",
+                "Corregir incidencia del panel operativo",
                 TaskPriority.HIGH,
                 4,
                 LocalDate.now().plusDays(2),
@@ -327,7 +344,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Optimize PostgreSQL queries",
+                "Optimizar consultas de PostgreSQL",
                 TaskPriority.HIGH,
                 6,
                 LocalDate.now().plusDays(5),
@@ -337,7 +354,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Improve assignment scoring",
+                "Mejorar puntuacion de asignaciones",
                 TaskPriority.HIGH,
                 7,
                 LocalDate.now().plusDays(6),
@@ -347,7 +364,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add audit logging",
+                "Anadir registro de auditoria",
                 TaskPriority.HIGH,
                 5,
                 LocalDate.now().plusDays(4),
@@ -357,7 +374,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Build planning dashboard",
+                "Crear panel de planificacion",
                 TaskPriority.MEDIUM,
                 6,
                 LocalDate.now().plusDays(7),
@@ -367,7 +384,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Dockerize deployment",
+                "Preparar despliegue con Docker",
                 TaskPriority.MEDIUM,
                 3,
                 LocalDate.now().plusDays(14),
@@ -376,7 +393,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add GitHub Actions pipeline",
+                "Configurar pipeline de GitHub Actions",
                 TaskPriority.MEDIUM,
                 4,
                 LocalDate.now().plusDays(10),
@@ -386,7 +403,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Create workload report",
+                "Crear informe de carga de trabajo",
                 TaskPriority.MEDIUM,
                 4,
                 LocalDate.now().plusDays(8),
@@ -396,7 +413,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Improve frontend dashboard layout",
+                "Mejorar interfaz del dashboard",
                 TaskPriority.MEDIUM,
                 5,
                 LocalDate.now().plusDays(9),
@@ -408,7 +425,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Write integration tests",
+                "Escribir tests de integracion",
                 TaskPriority.MEDIUM,
                 4,
                 LocalDate.now().plusDays(12),
@@ -418,7 +435,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add OpenAPI examples",
+                "Anadir ejemplos a OpenAPI",
                 TaskPriority.MEDIUM,
                 3,
                 LocalDate.now().plusDays(11),
@@ -428,7 +445,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add monitoring endpoint",
+                "Anadir endpoint de monitorizacion",
                 TaskPriority.MEDIUM,
                 4,
                 LocalDate.now().plusDays(13),
@@ -438,7 +455,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Refactor DTO mapping",
+                "Refactorizar mapeo de DTOs",
                 TaskPriority.LOW,
                 3,
                 LocalDate.now().plusDays(16),
@@ -447,7 +464,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Improve README documentation",
+                "Mejorar documentacion del README",
                 TaskPriority.LOW,
                 2,
                 LocalDate.now().plusDays(18),
@@ -456,7 +473,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add empty-state UI messages",
+                "Anadir mensajes cuando no haya datos",
                 TaskPriority.LOW,
                 2,
                 LocalDate.now().plusDays(15),
@@ -466,7 +483,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Clean unused CSS",
+                "Limpiar CSS no utilizado",
                 TaskPriority.LOW,
                 2,
                 LocalDate.now().plusDays(20),
@@ -475,7 +492,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add SQL dashboard counters",
+                "Anadir contadores SQL al dashboard",
                 TaskPriority.LOW,
                 3,
                 LocalDate.now().plusDays(17),
@@ -485,7 +502,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Add assignment explanation copy",
+                "Mejorar textos de las asignaciones",
                 TaskPriority.LOW,
                 2,
                 LocalDate.now().plusDays(19),
@@ -495,7 +512,7 @@ public class DemoDataLoader implements CommandLineRunner {
         );
         createTaskIfMissing(
                 existingTaskTitles,
-                "Review CI build logs",
+                "Revisar logs de integracion continua",
                 TaskPriority.LOW,
                 2,
                 LocalDate.now().plusDays(21),
