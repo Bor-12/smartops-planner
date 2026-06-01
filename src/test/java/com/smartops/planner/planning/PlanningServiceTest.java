@@ -116,7 +116,7 @@ class PlanningServiceTest {
         assertNull(assignment.getEmployee());
         assertEquals(task, assignment.getTask());
         assertEquals(0, assignment.getScore());
-        assertTrue(assignment.getExplanation().contains("No eligible employee found"));
+        assertTrue(assignment.getExplanation().contains("No se ha encontrado ningun empleado apto"));
         verify(taskRepository, never()).save(any(Task.class));
         verify(employeeRepository, never()).save(any(Employee.class));
     }
@@ -185,6 +185,7 @@ class PlanningServiceTest {
     }
 
     private void stubPlanningRunPersistence() {
+        when(taskRepository.findByStatus(TaskStatus.ASSIGNED)).thenReturn(List.of());
         when(planningRunRepository.save(any(PlanningRun.class))).thenAnswer(invocation -> {
             PlanningRun planningRun = invocation.getArgument(0);
             if (planningRun.getId() == null) {

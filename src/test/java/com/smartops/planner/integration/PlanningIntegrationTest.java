@@ -137,7 +137,7 @@ class PlanningIntegrationTest {
         assertThat(assignment.getAssigned()).isFalse();
         assertThat(assignment.getEmployee()).isNull();
         assertThat(assignment.getTask().getId()).isEqualTo(task.getId());
-        assertThat(assignment.getExplanation()).containsIgnoringCase("No eligible employee");
+        assertThat(assignment.getExplanation()).containsIgnoringCase("No se ha encontrado ningun empleado apto");
         assertThat(persistedTask.getStatus()).isEqualTo(TaskStatus.PENDING);
         assertThat(persistedTask.getAssignedEmployee()).isNull();
     }

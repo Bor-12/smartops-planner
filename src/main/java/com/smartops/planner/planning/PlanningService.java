@@ -56,6 +56,8 @@ public class PlanningService {
 
     @Transactional
     public PlanningRunResponse runPlanning() {
+        resetPreviousPlanning();
+
         PlanningRun planningRun = planningRunRepository.save(new PlanningRun(now()));
         List<Task> pendingTasks = taskRepository.findByStatus(TaskStatus.PENDING);
         List<Employee> availableEmployees = findAvailableEmployees();
@@ -101,10 +103,12 @@ public class PlanningService {
 
     @Transactional(readOnly = true)
     public List<AssignmentResponse> findAllAssignments() {
-        return assignmentRepository.findAll()
-                .stream()
-                .map(this::toAssignmentResponse)
-                .toList();
+        return planningRunRepository.findTopByOrderByStartedAtDesc()
+                .map(run -> assignmentRepository.findByPlanningRunId(run.getId())
+                        .stream()
+                        .map(this::toAssignmentResponse)
+                        .toList())
+                .orElse(List.of());
     }
 
     @Transactional(readOnly = true)
@@ -119,6 +123,25 @@ public class PlanningService {
                 .stream()
                 .filter(employee -> employee.getCurrentWeeklyHours() < employee.getMaxWeeklyHours())
                 .toList();
+    }
+
+    private void resetPreviousPlanning() {
+        List<Task> assignedTasks = taskRepository.findByStatus(TaskStatus.ASSIGNED);
+        for (Task task : assignedTasks) {
+            Employee employee = task.getAssignedEmployee();
+            if (employee != null) {
+                int updatedHours = Math.max(0, employee.getCurrentWeeklyHours() - task.getEstimatedHours());
+                employee.setCurrentWeeklyHours(updatedHours);
+                employeeRepository.save(employee);
+            }
+
+            task.setAssignedEmployee(null);
+            task.setStatus(TaskStatus.PENDING);
+            taskRepository.save(task);
+        }
+
+        assignmentRepository.deleteAll();
+        planningRunRepository.deleteAll();
     }
 
     private Optional<CandidateScore> findBestCandidate(Task task, List<Employee> employees) {
@@ -150,7 +173,9 @@ public class PlanningService {
     }
 
     private void registerUnassignedTask(PlanningRun planningRun, Task task) {
-        String explanation = "No eligible employee found for task " + task.getTitle() + ".";
+        String explanation = "No se ha encontrado ningun empleado apto para la tarea "
+                + task.getTitle()
+                + ". Revisa las habilidades requeridas y las horas disponibles.";
         assignmentRepository.save(new Assignment(
                 planningRun,
                 task,
