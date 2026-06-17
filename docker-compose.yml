@@ -3,14 +3,47 @@ services:
     image: postgres:16-alpine
     container_name: smartops-postgres
     environment:
-      POSTGRES_DB: smartops
-      POSTGRES_USER: smartops
-      POSTGRES_PASSWORD: smartops
+      POSTGRES_DB: ${POSTGRES_DB:-smartops}
+      POSTGRES_USER: ${POSTGRES_USER:-smartops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smartops}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - smartops_postgres_data:/var/lib/postgresql/data
       - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smartops} -d ${POSTGRES_DB:-smartops}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: smartops-planner:${APP_IMAGE_TAG:-local}
+    container_name: smartops-app
+    profiles:
+      - app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-smartops}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-smartops}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-smartops}
+      APP_SECURITY_JWT_SECRET: ${APP_SECURITY_JWT_SECRET:-change-this-local-compose-secret}
+      APP_SECURITY_JWT_EXPIRATION_SECONDS: ${APP_SECURITY_JWT_EXPIRATION_SECONDS:-86400}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   smartops_postgres_data:

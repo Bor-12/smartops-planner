@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/smartops_dev
-    username: smartops
-    password: smartops
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smartops_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:smartops}
+    password: ${SPRING_DATASOURCE_PASSWORD:smartops}
     driver-class-name: org.postgresql.Driver
 
   jpa:

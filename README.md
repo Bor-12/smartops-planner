@@ -1,104 +1,90 @@
 # SmartOps Planner
 
-SmartOps Planner is a Spring Boot backend for operational planning. It helps teams manage skills, employees, tasks, assignments and planning runs, then automatically selects the best employee for each pending task using a scoring algorithm.
+SmartOps Planner es una aplicacion Spring Boot para planificacion operativa. Permite gestionar usuarios, empleados, skills, tareas y ejecuciones de planificacion, y asigna automaticamente tareas pendientes al empleado mas adecuado segun skills, capacidad semanal, seniority, prioridad y deadline.
 
-The project is designed as a clean REST API with JWT security, PostgreSQL persistence, Flyway migrations, automated tests and OpenAPI documentation.
+El proyecto incluye API REST, JWT, autorizacion por roles, PostgreSQL, migraciones Flyway, tests automatizados, Swagger/OpenAPI y una interfaz web sencilla servida desde Spring Boot.
 
-## Overview
+## Funcionalidades
 
-Operational teams often need to answer a simple but important question: who should work on each task?
+- Login con JWT.
+- Interfaz web por rol:
+  - `ADMIN`: usuarios, empleados, tareas, dashboard y planificacion.
+  - `MANAGER`: empleados, tareas, dashboard y planificacion.
+  - `EMPLOYEE`: solo sus tareas asignadas.
+- Gestion de usuarios.
+- Gestion de empleados con seniority, skills y carga semanal.
+- Gestion de skills.
+- Gestion de tareas con prioridad, horas estimadas, deadline, estado y skills requeridas.
+- Ejecucion de planificacion automatica.
+- Consulta de asignaciones y explicaciones.
+- Endpoint de tareas propias para empleados.
+- Dashboard de resumen, carga y estado de tareas.
+- Persistencia en PostgreSQL.
+- Migraciones Flyway.
+- Tests de servicios, controllers, seguridad e integracion.
 
-SmartOps Planner models the core planning data and provides an assignment engine that considers:
-
-- required skills
-- employee seniority
-- weekly capacity
-- current workload
-- task priority
-- deadline pressure
-
-The API can create domain data, run planning, inspect assignments and expose dashboard summaries.
-
-## Features
-
-- Employee management with skills, seniority and weekly capacity.
-- Skill catalog management.
-- Task management with priority, deadline, required skills and status.
-- Planning runs that persist assignment decisions.
-- Scoring explanations for why an employee was or was not selected.
-- Dashboard endpoints for workload, task status and planning summary.
-- JWT authentication with role-based authorization.
-- Flyway-managed PostgreSQL schema.
-- OpenAPI / Swagger UI documentation.
-- Unit, controller and integration tests.
-- GitHub Actions workflows for tests and Docker image build.
-
-## Tech Stack
+## Stack
 
 - Java 21
 - Spring Boot 3.5.x
 - Spring Web
 - Spring Data JPA
 - Spring Security
+- JWT
 - PostgreSQL
 - Flyway
 - Maven
-- Testcontainers
 - JUnit 5
 - Mockito
 - MockMvc
+- Testcontainers
 - springdoc-openapi / Swagger UI
-- GitHub Actions
 
-## Architecture
+## Estructura
 
-The codebase follows package-by-feature organization:
+El codigo esta organizado por paquetes funcionales:
 
 ```text
 com.smartops.planner
-+-- auth          # registration and login
-+-- user          # users and roles
-+-- security      # JWT, filters and security config
-+-- skill         # skills API and persistence
-+-- employee      # employees API and persistence
-+-- task          # tasks API and persistence
-+-- planning      # scoring, assignments and planning runs
-+-- dashboard     # reporting endpoints
-+-- common        # shared exceptions and API error response
-+-- config        # OpenAPI configuration
++-- auth          # login y registro protegido
++-- user          # usuarios y roles
++-- security      # JWT, filtros y reglas de seguridad
++-- employee      # empleados
++-- skill         # skills
++-- task          # tareas y tareas propias
++-- planning      # planificacion, scoring y asignaciones
++-- dashboard     # resumenes operativos
++-- common        # errores y respuestas compartidas
++-- config        # datos demo y OpenAPI
++-- web           # entrada web y healthcheck
 ```
 
-Each functional package follows the usual Spring shape where it makes sense:
+La interfaz esta en:
 
-- `Controller`
-- `Service`
-- `Repository`
-- `Entity`
-- `DTO`
+```text
+src/main/resources/static
++-- index.html
++-- css/styles.css
++-- js/app.js
++-- js/api.js
++-- js/session.js
++-- js/renderers.js
++-- js/format.js
+```
 
-Business logic lives in services, not controllers.
+## Modelo De Dominio
 
-## Domain Model
+Entidades principales:
 
-Main entities:
-
-- `User`: application account used for authentication.
+- `User`: cuenta de acceso.
 - `Role`: `ADMIN`, `MANAGER`, `EMPLOYEE`.
-- `Skill`: capability such as Java, Spring Boot or Docker.
-- `Employee`: person with email, seniority, skills and weekly workload.
-- `Task`: work item with priority, estimated hours, deadline, status and required skills.
-- `PlanningRun`: execution record of the planning process.
-- `Assignment`: result for one task in a planning run.
+- `Employee`: empleado con email, seniority, skills y carga semanal.
+- `Skill`: habilidad.
+- `Task`: tarea con prioridad, horas estimadas, deadline, estado y skills requeridas.
+- `PlanningRun`: ejecucion del planificador.
+- `Assignment`: resultado de asignar o no asignar una tarea.
 
-Important relationships:
-
-- Employee many-to-many Skill.
-- Task many-to-many required Skill.
-- Task optional assigned Employee.
-- PlanningRun one-to-many Assignment.
-- Assignment references Task and optionally Employee.
-
-Task statuses:
+Estados de tarea:
 
 ```text
 PENDING
@@ -108,7 +94,7 @@ DONE
 CANCELLED
 ```
 
-Task priorities:
+Prioridades:
 
 ```text
 LOW
@@ -117,103 +103,22 @@ HIGH
 URGENT
 ```
 
-## Scoring Algorithm
+## Roles Y Permisos
 
-`ScoringService` evaluates each candidate employee for each pending task. The best eligible candidate is selected.
-
-Core scoring rules:
-
-| Rule | Effect |
-|---|---:|
-| Matching required skill | `+20` per skill |
-| Missing required skill | `-25` and not eligible |
-| Extra skill | `+5`, capped at `+10` |
-| Enough seniority | `+15` |
-| Seniority gap | `-15` |
-| Urgent task with non-senior employee | `-30` |
-| Workload below 60% | `+15` |
-| Workload between 60% and 80% | `+8` |
-| Workload above 80% | `-10` |
-| Enough weekly capacity | `+20` |
-| Capacity exceeded | `-40` and not eligible |
-| Close deadline with relevant workload | `-15` |
-
-Hard blockers:
-
-- missing required skills
-- exceeding weekly capacity
-
-When no employee is eligible, the task remains `PENDING` and an unassigned assignment is persisted with an explanation.
-
-More detail is available in:
-
-```text
-src/main/java/com/smartops/planner/planning/scoring-algorithm.md
-```
-
-## API Endpoints
-
-Public endpoints:
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Home message |
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/auth/register` | Register user |
-| `POST` | `/api/auth/login` | Login and receive JWT |
-| `GET` | `/v3/api-docs` | OpenAPI JSON |
-| `GET` | `/swagger-ui.html` | Swagger UI |
-
-Protected endpoints:
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/skills` | List skills |
-| `GET` | `/api/skills/{id}` | Find skill |
-| `POST` | `/api/skills` | Create skill |
-| `DELETE` | `/api/skills/{id}` | Delete skill |
-| `GET` | `/api/employees` | List employees |
-| `GET` | `/api/employees/{id}` | Find employee |
-| `POST` | `/api/employees` | Create employee |
-| `PUT` | `/api/employees/{id}` | Update employee |
-| `DELETE` | `/api/employees/{id}` | Delete employee |
-| `GET` | `/api/tasks` | List tasks |
-| `GET` | `/api/tasks/{id}` | Find task |
-| `POST` | `/api/tasks` | Create task |
-| `PUT` | `/api/tasks/{id}` | Update task |
-| `PATCH` | `/api/tasks/{id}/status` | Update task status |
-| `DELETE` | `/api/tasks/{id}` | Delete task |
-| `POST` | `/api/planning/run` | Run planning |
-| `GET` | `/api/planning/runs` | List planning runs |
-| `GET` | `/api/planning/runs/{id}` | Find planning run |
-| `GET` | `/api/planning/assignments` | List assignments |
-| `GET` | `/api/planning/assignments/{id}` | Find assignment |
-| `GET` | `/api/dashboard/workload` | Employee workload summary |
-| `GET` | `/api/dashboard/task-status` | Task status summary |
-| `GET` | `/api/dashboard/planning-summary` | Planning summary |
-
-## Security
-
-Authentication uses JWT.
-
-Register or login to receive a token, then call protected endpoints with:
-
-```http
-Authorization: Bearer TOKEN
-```
-
-Roles:
-
-- `ADMIN`
-- `MANAGER`
-- `EMPLOYEE`
-
-Access rules:
-
-| Path | Access |
+| Rol | Puede hacer |
 |---|---|
-| `/api/auth/**` | Public |
-| `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**` | Public |
+| `ADMIN` | Gestionar usuarios, empleados, skills, tareas, dashboard y planificacion |
+| `MANAGER` | Gestionar empleados, skills, tareas, dashboard y planificacion |
+| `EMPLOYEE` | Consultar sus tareas asignadas y cambiar su estado |
+
+Reglas principales:
+
+| Endpoint | Acceso |
+|---|---|
+| `GET /`, `GET /api/health` | Publico |
+| `POST /api/auth/login` | Publico |
+| `POST /api/auth/register` | `ADMIN` |
+| `/api/users/**` | `ADMIN` |
 | `/api/skills/**` | `ADMIN`, `MANAGER` |
 | `/api/employees/**` | `ADMIN`, `MANAGER` |
 | `/api/tasks/**` | `ADMIN`, `MANAGER` |
@@ -221,47 +126,147 @@ Access rules:
 | `/api/dashboard/**` | `ADMIN`, `MANAGER` |
 | `/api/my-tasks/**` | `EMPLOYEE` |
 
-Passwords are stored with BCrypt.
+Las contrasenas se guardan con BCrypt.
 
-## Running Locally
+## Planificacion
 
-Requirements:
+El planificador evalua cada tarea `PENDING` contra los empleados disponibles. Una asignacion solo se guarda como valida si el empleado es elegible.
+
+Bloqueos duros:
+
+- Faltan skills requeridas.
+- La tarea supera la capacidad semanal disponible del empleado.
+
+Reglas principales de scoring:
+
+| Regla | Efecto |
+|---|---:|
+| Skill requerida cumplida | `+20` |
+| Skill requerida faltante | `-25` y no elegible |
+| Skill extra | `+5`, maximo `+10` |
+| Seniority suficiente | `+15` |
+| Seniority insuficiente | `-15` |
+| Tarea urgente con empleado no senior | `-30` |
+| Carga menor al 60% | `+15` |
+| Carga entre 60% y 80% | `+8` |
+| Carga superior al 80% | `-10` |
+| Capacidad suficiente | `+20` |
+| Capacidad excedida | `-40` y no elegible |
+| Deadline cercano con carga relevante | `-15` |
+
+Detalle tecnico:
+
+```text
+src/main/java/com/smartops/planner/planning/ScoringService.java
+src/main/java/com/smartops/planner/planning/scoring-algorithm.md
+```
+
+## Ejecucion Local
+
+Requisitos:
 
 - Java 21
 - Maven
 - Docker Desktop
 
-Start PostgreSQL:
+Arrancar PostgreSQL:
 
-```bash
+```powershell
 docker compose up -d
 ```
 
-Run the application:
+Arrancar la app en modo normal:
 
-```bash
+```powershell
 mvn spring-boot:run
 ```
 
-The API runs on:
+Arrancar la app en modo dev:
+
+```powershell
+mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+Abrir:
 
 ```text
 http://localhost:8080
 ```
 
-Swagger UI:
+Swagger:
 
 ```text
 http://localhost:8080/swagger-ui.html
 ```
 
-OpenAPI JSON:
+Healthcheck:
 
 ```text
-http://localhost:8080/v3/api-docs
+http://localhost:8080/api/health
 ```
 
-Default local database settings:
+## Datos Demo En Dev
+
+El perfil `dev` carga datos demo desde:
+
+```text
+src/main/java/com/smartops/planner/config/DemoDataLoader.java
+```
+
+Usuarios demo:
+
+| Usuario | Rol | Password |
+|---|---|---|
+| `admin` | `ADMIN` | `password123` |
+| `manager` | `MANAGER` | `password123` |
+| `employee` | `EMPLOYEE` | `password123` |
+| `laura.sanchez` | `MANAGER` | `password123` |
+| `miguel.torres` | `MANAGER` | `password123` |
+| `ana.garcia` | `EMPLOYEE` | `password123` |
+| `carlos.martin` | `EMPLOYEE` | `password123` |
+| `marta.lopez` | `EMPLOYEE` | `password123` |
+| `david.romero` | `EMPLOYEE` | `password123` |
+| `elena.navarro` | `EMPLOYEE` | `password123` |
+| `pablo.ruiz` | `EMPLOYEE` | `password123` |
+
+Para reiniciar la base de datos local y recargar datos demo:
+
+```powershell
+docker compose down -v
+docker compose up -d
+mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+## Base De Datos Y Docker
+
+El contenedor de PostgreSQL esta definido en:
+
+```text
+docker-compose.yml
+```
+
+El proyecto tambien incluye:
+
+```text
+Dockerfile
+.dockerignore
+.env.example
+```
+
+Configuracion de datasource:
+
+```text
+src/main/resources/application.yaml
+src/main/resources/application-dev.yaml
+```
+
+Migraciones:
+
+```text
+src/main/resources/db/migration
+```
+
+Configuracion local por defecto:
 
 ```text
 database: smartops
@@ -270,92 +275,89 @@ password: smartops
 port: 5432
 ```
 
-## Running with Docker
+Ver volumenes:
 
-The project includes `docker-compose.yml` for local PostgreSQL:
-
-```bash
-docker compose up -d
+```powershell
+docker volume ls
+docker compose config
 ```
 
-Build the application:
+Levantar solo PostgreSQL para desarrollo local:
 
-```bash
-mvn clean package
+```powershell
+docker compose up -d postgres
 ```
 
-Build an OCI image with Spring Boot buildpacks:
+Levantar aplicacion + PostgreSQL con Docker Compose:
 
-```bash
-mvn spring-boot:build-image -Dspring-boot.build-image.imageName=smartops-planner:local
+```powershell
+copy .env.example .env
+docker compose --profile app up --build
 ```
 
-Run the image against the Compose database:
-
-```bash
-docker run --rm -p 8080:8080 ^
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/smartops ^
-  -e SPRING_DATASOURCE_USERNAME=smartops ^
-  -e SPRING_DATASOURCE_PASSWORD=smartops ^
-  smartops-planner:local
-```
-
-On Linux, replace `host.docker.internal` if needed with the appropriate Docker host address or run both services on the same Docker network.
-
-## Testing
-
-Run all tests:
-
-```bash
-mvn clean test
-```
-
-Test coverage includes:
-
-- service unit tests
-- controller tests with MockMvc and mocked services
-- security authorization tests
-- JWT unit tests
-- PostgreSQL integration tests with Testcontainers
-- OpenAPI documentation accessibility test
-
-Integration tests use Testcontainers and do not depend on the local `docker-compose.yml`.
-
-Requirements for integration tests:
-
-- Docker Desktop running
-
-## CI/CD
-
-GitHub Actions workflows live in:
+La app queda disponible en:
 
 ```text
-.github/workflows
+http://localhost:8080
 ```
 
-Current workflows:
+Los servicios tienen healthcheck:
 
-- `tests.yml`: runs Maven tests on `push` and `pull_request`.
-- `docker-build.yml`: builds the application and Docker image on pushes to `main` and manual runs.
+- PostgreSQL usa `pg_isready`.
+- La app usa `GET /api/health`.
 
-Docker Hub publishing is prepared for future secrets:
+Variables principales:
 
-```text
-DOCKERHUB_USERNAME
-DOCKERHUB_TOKEN
-```
+| Variable | Uso |
+|---|---|
+| `POSTGRES_DB` | Nombre de la base de datos |
+| `POSTGRES_USER` | Usuario de PostgreSQL |
+| `POSTGRES_PASSWORD` | Password de PostgreSQL |
+| `POSTGRES_PORT` | Puerto local de PostgreSQL |
+| `APP_PORT` | Puerto local de la app |
+| `SPRING_PROFILES_ACTIVE` | Perfil activo de Spring |
+| `APP_SECURITY_JWT_SECRET` | Secreto JWT |
+| `APP_SECURITY_JWT_EXPIRATION_SECONDS` | Duracion del JWT |
 
-## JSON Examples
+No subas `.env` al repositorio. Usa `.env.example` como plantilla.
 
-Register:
+## Uso Basico
 
-```json
-{
-  "username": "manager",
-  "password": "password123",
-  "role": "MANAGER"
-}
-```
+Flujo recomendado:
+
+1. Entrar como `manager` o `admin`.
+2. Crear o revisar empleados y skills.
+3. Crear tareas pendientes.
+4. Ejecutar planificacion.
+5. Revisar asignaciones.
+6. Entrar como `employee`.
+7. Ver `Mis tareas`.
+8. Cambiar una tarea a `IN_PROGRESS` o `DONE`.
+
+## API Principal
+
+| Metodo | Endpoint | Descripcion |
+|---|---|---|
+| `POST` | `/api/auth/login` | Login |
+| `POST` | `/api/auth/register` | Crear usuario desde contexto admin |
+| `GET` | `/api/users` | Listar usuarios |
+| `POST` | `/api/users` | Crear usuario |
+| `GET` | `/api/employees` | Listar empleados |
+| `POST` | `/api/employees` | Crear empleado |
+| `GET` | `/api/skills` | Listar skills |
+| `POST` | `/api/skills` | Crear skill |
+| `GET` | `/api/tasks` | Listar tareas |
+| `POST` | `/api/tasks` | Crear tarea |
+| `PATCH` | `/api/tasks/{id}/status` | Cambiar estado de tarea |
+| `POST` | `/api/planning/run` | Ejecutar planificacion |
+| `GET` | `/api/planning/assignments` | Ver asignaciones de la ultima planificacion |
+| `GET` | `/api/dashboard/planning-summary` | Resumen de planificacion |
+| `GET` | `/api/dashboard/workload` | Carga de empleados |
+| `GET` | `/api/dashboard/task-status` | Tareas por estado |
+| `GET` | `/api/my-tasks` | Tareas del empleado autenticado |
+| `PATCH` | `/api/my-tasks/{id}/status` | Cambiar estado de una tarea propia |
+
+## Ejemplos JSON
 
 Login:
 
@@ -366,41 +368,43 @@ Login:
 }
 ```
 
-Create skill:
+Crear usuario:
 
 ```json
 {
-  "name": "Java"
+  "username": "nuevo.usuario",
+  "password": "password123",
+  "role": "EMPLOYEE"
 }
 ```
 
-Create employee:
+Crear empleado:
 
 ```json
 {
-  "name": "Ada",
-  "email": "ada@smartops.test",
+  "name": "Ana Garcia",
+  "email": "ana.garcia@smartops.demo",
   "maxWeeklyHours": 40,
   "currentWeeklyHours": 10,
   "seniorityLevel": "SENIOR",
-  "skillIds": [1]
+  "skillIds": [1, 2]
 }
 ```
 
-Create task:
+Crear tarea:
 
 ```json
 {
-  "title": "Build planning API",
-  "description": "Implement assignment planning flow",
+  "title": "Optimizar consultas de PostgreSQL",
+  "description": "Revisar queries usadas por el dashboard",
   "priority": "HIGH",
   "estimatedHours": 6,
   "deadline": "2026-06-15",
-  "requiredSkillIds": [1]
+  "requiredSkillIds": [4, 5]
 }
 ```
 
-Update task status:
+Cambiar estado:
 
 ```json
 {
@@ -408,36 +412,110 @@ Update task status:
 }
 ```
 
-Run planning:
+Ejecutar planificacion:
 
-```bash
-curl -X POST http://localhost:8080/api/planning/run \
+```powershell
+curl -X POST http://localhost:8080/api/planning/run `
   -H "Authorization: Bearer TOKEN"
 ```
 
-## Swagger
+## Tests
 
-Swagger UI is available at:
+Ejecutar todos los tests:
 
-```text
-http://localhost:8080/swagger-ui.html
+```powershell
+mvn clean test
 ```
 
-Use the `Authorize` button and paste:
+Ejecutar tests concretos:
 
-```text
-Bearer TOKEN
+```powershell
+mvn "-Dtest=SecurityAuthorizationTest,SecurityIntegrationTest" test
+mvn "-Dtest=PlanningServiceTest,PlanningIntegrationTest" test
 ```
 
-No frontend screenshots are included because this repository is a backend API project.
+Cobertura incluida:
 
-## Future Improvements
+- Tests de servicios.
+- Tests de controllers con MockMvc.
+- Tests de autorizacion por rol.
+- Tests de JWT.
+- Tests de integracion con PostgreSQL mediante Testcontainers.
+- Test de documentacion OpenAPI.
 
-- Employee availability calendar.
-- Skill proficiency levels.
-- Configurable scoring weights.
-- Employee self-service endpoints for `/api/my-tasks`.
-- Forced assignments and manual override workflows.
-- Pagination and filtering for list endpoints.
-- Dockerfile or production Compose setup.
-- Deployment workflow with environment-specific configuration.
+Los tests de integracion necesitan Docker Desktop arrancado.
+
+## Capturas
+
+Si el README se va a enseñar en GitHub, si meteria una captura de la interfaz. Ayuda bastante a entender que no es solo una API.
+
+Recomendacion:
+
+```text
+docs/images/dashboard.png
+```
+
+Y despues anadir en esta seccion:
+
+```md
+![Dashboard de SmartOps Planner](docs/images/dashboard.png)
+```
+
+No he dejado una imagen enlazada todavia para evitar un enlace roto en el README.
+
+## CI/CD
+
+Los workflows estan en:
+
+```text
+.github/workflows
+```
+
+Workflows actuales:
+
+| Workflow | Archivo | Que hace |
+|---|---|---|
+| `CI` | `.github/workflows/tests.yml` | Ejecuta tests, compila el JAR y sube el artefacto |
+| `Docker` | `.github/workflows/docker-build.yml` | Construye la imagen Docker con el `Dockerfile` |
+
+El workflow `CI` se ejecuta en:
+
+- `push`
+- `pull_request`
+
+El workflow `Docker` se ejecuta en:
+
+- push a `main`
+- ejecucion manual con `workflow_dispatch`
+
+Para publicar imagen en Docker Hub, configura estos secrets en GitHub:
+
+```text
+DOCKERHUB_USERNAME
+DOCKERHUB_TOKEN
+```
+
+Si esos secrets existen, el workflow publica:
+
+```text
+DOCKERHUB_USERNAME/smartops-planner:<commit-sha>
+DOCKERHUB_USERNAME/smartops-planner:latest
+```
+
+Si no existen, solo construye la imagen para validar que el Dockerfile funciona.
+
+Badge recomendado cuando el repositorio este en GitHub:
+
+```md
+![CI](https://github.com/OWNER/REPOSITORY/actions/workflows/tests.yml/badge.svg)
+```
+
+## Mejoras Futuras
+
+- Disponibilidad por calendario.
+- Niveles de dominio por skill.
+- Pesos de scoring configurables.
+- Filtros y paginacion en listados.
+- Reasignacion manual.
+- Vista historica de planificaciones.
+- Capturas reales de la interfaz en `docs/images`.

@@ -1,12 +1,15 @@
-name: Tests
+name: CI
 
 on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    name: Run Maven tests
+    name: Tests and JAR build
     runs-on: ubuntu-latest
 
     services:
@@ -28,6 +31,7 @@ jobs:
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/smartops
       SPRING_DATASOURCE_USERNAME: smartops
       SPRING_DATASOURCE_PASSWORD: smartops
+      APP_SECURITY_JWT_SECRET: ci-test-secret-change-in-real-environments
 
     steps:
       - name: Checkout repository
@@ -42,3 +46,13 @@ jobs:
 
       - name: Run tests
         run: mvn -B clean test
+
+      - name: Build JAR
+        run: mvn -B -DskipTests package
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smartops-planner-jar
+          path: target/*.jar
+          if-no-files-found: error

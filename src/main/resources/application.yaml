@@ -3,9 +3,9 @@ spring:
     name: smartops-planner
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/smartops
-    username: smartops
-    password: smartops
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smartops}
+    username: ${SPRING_DATASOURCE_USERNAME:smartops}
+    password: ${SPRING_DATASOURCE_PASSWORD:smartops}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -26,5 +26,5 @@ server:
 app:
   security:
     jwt:
-      secret: smartops-planner-local-development-secret-please-change
-      expiration-seconds: 86400
+      secret: ${APP_SECURITY_JWT_SECRET:smartops-planner-local-development-secret-please-change}
+      expiration-seconds: ${APP_SECURITY_JWT_EXPIRATION_SECONDS:86400}
