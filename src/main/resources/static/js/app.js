@@ -127,17 +127,20 @@ async function loadDashboard() {
             apiFetch(API.assignments),
             apiFetch(API.planningRuns)
         ]);
-        const [users, employees, tasks, skills] = await Promise.all([
-            apiFetch(API.users),
+
+        const [employees, tasks, skills] = await Promise.all([
             apiFetch(API.employees),
             apiFetch(API.tasks),
             apiFetch(API.skills)
         ]);
+        const users = getRole() === "ADMIN" ? await apiFetch(API.users) : [];
 
         renderMetricCards(elements.metricCards, summary);
         renderPlanningSummary(elements.planningSummary, summary, runs);
         renderPermissions(elements.permissionsGrid, getRole());
-        renderUsersTable(elements.usersTableBody, elements.usersEmpty, users);
+        if (getRole() === "ADMIN") {
+            renderUsersTable(elements.usersTableBody, elements.usersEmpty, users);
+        }
         renderSkillOptions(elements.employeeSkillOptions, skills, "skillIds");
         renderSkillOptions(elements.taskSkillOptions, skills, "requiredSkillIds");
         renderEmployeesTable(elements.employeesTableBody, elements.employeesEmpty, employees);
