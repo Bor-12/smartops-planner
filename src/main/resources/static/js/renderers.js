@@ -94,7 +94,7 @@ export function renderPermissions(container, role) {
     `).join("");
 }
 
-export function renderEmployeesTable(tableBody, emptyElement, employees) {
+export function renderEmployeesTable(tableBody, emptyElement, employees, onEdit) {
     tableBody.innerHTML = "";
     const hasRows = Array.isArray(employees) && employees.length > 0;
     emptyElement.classList.toggle("hidden", hasRows);
@@ -122,12 +122,27 @@ export function renderEmployeesTable(tableBody, emptyElement, employees) {
                     </div>
                     <span class="subtext">${formatNumber(percentage)}%</span>
                 </td>
+                <td>
+                    <div class="row-actions">
+                        <button type="button" class="button tiny secondary" data-employee-edit="${employee.id}">Editar</button>
+                    </div>
+                </td>
             </tr>
         `;
     }).join("");
+
+    tableBody.querySelectorAll("[data-employee-edit]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const employee = employees.find((item) => String(item.id) === button.dataset.employeeEdit);
+            if (employee) {
+                onEdit(employee);
+            }
+        });
+    });
+
 }
 
-export function renderSkillsTable(tableBody, emptyElement, skills) {
+export function renderSkillsTable(tableBody, emptyElement, skills, onDelete) {
     tableBody.innerHTML = "";
     const hasRows = Array.isArray(skills) && skills.length > 0;
     emptyElement.classList.toggle("hidden", hasRows);
@@ -139,11 +154,18 @@ export function renderSkillsTable(tableBody, emptyElement, skills) {
     tableBody.innerHTML = skills.map((skill) => `
         <tr>
             <td><span class="tag">${escapeHtml(skill.name)}</span></td>
+            <td>
+                <button type="button" class="button tiny danger" data-skill-delete="${skill.id}">Borrar</button>
+            </td>
         </tr>
     `).join("");
+
+    tableBody.querySelectorAll("[data-skill-delete]").forEach((button) => {
+        button.addEventListener("click", () => onDelete(button.dataset.skillDelete));
+    });
 }
 
-export function renderTasksTable(tableBody, emptyElement, tasks) {
+export function renderTasksTable(tableBody, emptyElement, tasks, onEdit, onDelete) {
     tableBody.innerHTML = "";
     const hasRows = Array.isArray(tasks) && tasks.length > 0;
     emptyElement.classList.toggle("hidden", hasRows);
@@ -163,8 +185,27 @@ export function renderTasksTable(tableBody, emptyElement, tasks) {
             <td>${task.estimatedHours ?? 0} h</td>
             <td>${escapeHtml(task.deadline || "Sin fecha")}</td>
             <td>${renderSkillTags(task.requiredSkills)}</td>
+            <td>
+                <div class="row-actions">
+                    <button type="button" class="button tiny secondary" data-task-edit="${task.id}">Editar</button>
+                    <button type="button" class="button tiny danger" data-task-delete="${task.id}">Borrar</button>
+                </div>
+            </td>
         </tr>
     `).join("");
+
+    tableBody.querySelectorAll("[data-task-edit]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const task = tasks.find((item) => String(item.id) === button.dataset.taskEdit);
+            if (task) {
+                onEdit(task);
+            }
+        });
+    });
+
+    tableBody.querySelectorAll("[data-task-delete]").forEach((button) => {
+        button.addEventListener("click", () => onDelete(button.dataset.taskDelete));
+    });
 }
 
 export function renderMyTasks(container, emptyElement, tasks, onStatusChange) {

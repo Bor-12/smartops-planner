@@ -45,7 +45,7 @@
 
             <nav class="nav-menu">
                 <button type="button" class="nav-link active" data-view-target="overviewView">Resumen</button>
-                <button type="button" class="nav-link" data-view-target="usersView">Usuarios</button>
+                <button type="button" class="nav-link" data-view-target="usersView">Accesos</button>
                 <button type="button" class="nav-link" data-view-target="teamView">Empleados</button>
                 <button type="button" class="nav-link" data-view-target="skillsView">Skills</button>
                 <button type="button" class="nav-link" data-view-target="tasksView">Tareas</button>
@@ -84,7 +84,7 @@
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">Accesos</p>
-                            <h2 id="usersTitle">Usuarios y permisos</h2>
+                            <h2 id="usersTitle">Accesos y permisos</h2>
                         </div>
                     </div>
                     <div id="permissionsGrid" class="permissions-grid"></div>
@@ -105,7 +105,7 @@
                                 <option value="EMPLOYEE">EMPLOYEE</option>
                             </select>
                         </div>
-                        <button type="submit" class="button primary">Crear usuario</button>
+                        <button type="submit" class="button primary">Crear acceso</button>
                     </form>
                     <div class="table-wrap">
                         <table>
@@ -129,14 +129,15 @@
                             <h2 id="teamTitle">Empleados y carga semanal</h2>
                         </div>
                     </div>
-                    <form id="createEmployeeForm" class="form-panel">
+                    <p class="panel-note">Los empleados se crean automaticamente al crear un acceso con rol EMPLOYEE. Desde aqui se completan sus horas, seniority y skills para la planificacion.</p>
+                    <form id="createEmployeeForm" class="form-panel hidden">
                         <div class="field">
                             <label for="employeeName">Nombre</label>
                             <input id="employeeName" name="name" type="text" required>
                         </div>
                         <div class="field">
                             <label for="employeeEmail">Email</label>
-                            <input id="employeeEmail" name="email" type="email" required>
+                            <input id="employeeEmail" name="email" type="email" readonly required>
                         </div>
                         <div class="field">
                             <label for="employeeMaxHours">Horas max.</label>
@@ -159,7 +160,8 @@
                             <label>Skills</label>
                             <div id="employeeSkillOptions" class="checkbox-grid"></div>
                         </div>
-                        <button type="submit" class="button primary">Crear empleado</button>
+                        <button id="employeeSubmitButton" type="submit" class="button primary">Actualizar empleado</button>
+                        <button id="cancelEmployeeEditButton" type="button" class="button secondary hidden">Cancelar edicion</button>
                     </form>
                     <div class="table-wrap">
                         <table>
@@ -170,6 +172,7 @@
                                     <th>Skills</th>
                                     <th>Horas</th>
                                     <th>Uso</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="employeesTableBody"></tbody>
@@ -197,6 +200,7 @@
                             <thead>
                                 <tr>
                                     <th>Skill</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="skillsTableBody"></tbody>
@@ -242,7 +246,8 @@
                             <label>Skills requeridas</label>
                             <div id="taskSkillOptions" class="checkbox-grid"></div>
                         </div>
-                        <button type="submit" class="button primary">Crear tarea</button>
+                        <button id="taskSubmitButton" type="submit" class="button primary">Crear tarea</button>
+                        <button id="cancelTaskEditButton" type="button" class="button secondary hidden">Cancelar edicion</button>
                     </form>
                     <div id="taskStatusList" class="status-list"></div>
                     <p id="taskStatusEmpty" class="empty-state hidden">No hay tareas cargadas.</p>
@@ -256,6 +261,7 @@
                                     <th>Horas</th>
                                     <th>Deadline</th>
                                     <th>Skills</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tasksTableBody"></tbody>

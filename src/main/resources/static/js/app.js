@@ -16,7 +16,7 @@ import {
 
 const pageTitles = {
     overviewView: "Resumen",
-    usersView: "Usuarios",
+    usersView: "Accesos",
     teamView: "Empleados",
     skillsView: "Skills",
     tasksView: "Tareas",
@@ -37,7 +37,11 @@ const elements = {
     createUserForm: document.getElementById("createUserForm"),
     createSkillForm: document.getElementById("createSkillForm"),
     createEmployeeForm: document.getElementById("createEmployeeForm"),
+    employeeSubmitButton: document.getElementById("employeeSubmitButton"),
+    cancelEmployeeEditButton: document.getElementById("cancelEmployeeEditButton"),
     createTaskForm: document.getElementById("createTaskForm"),
+    taskSubmitButton: document.getElementById("taskSubmitButton"),
+    cancelTaskEditButton: document.getElementById("cancelTaskEditButton"),
     navLinks: [...document.querySelectorAll("[data-view-target]")],
     views: [...document.querySelectorAll(".view")],
     metricCards: document.getElementById("metricCards"),
@@ -69,8 +73,10 @@ function init() {
     elements.runPlanningButton.addEventListener("click", runPlanning);
     elements.createUserForm.addEventListener("submit", createUser);
     elements.createSkillForm.addEventListener("submit", createSkill);
-    elements.createEmployeeForm.addEventListener("submit", createEmployee);
+    elements.createEmployeeForm.addEventListener("submit", updateEmployee);
+    elements.cancelEmployeeEditButton.addEventListener("click", resetEmployeeForm);
     elements.createTaskForm.addEventListener("submit", createTask);
+    elements.cancelTaskEditButton.addEventListener("click", resetTaskForm);
     elements.navLinks.forEach((link) => {
         link.addEventListener("click", () => setActiveView(link.dataset.viewTarget));
     });
@@ -147,12 +153,12 @@ async function loadDashboard() {
         if (getRole() === "ADMIN") {
             renderUsersTable(elements.usersTableBody, elements.usersEmpty, users);
         }
-        renderSkillsTable(elements.skillsTableBody, elements.skillsEmpty, skills);
+        renderSkillsTable(elements.skillsTableBody, elements.skillsEmpty, skills, deleteSkill);
         renderSkillOptions(elements.employeeSkillOptions, skills, "skillIds");
         renderSkillOptions(elements.taskSkillOptions, skills, "requiredSkillIds");
-        renderEmployeesTable(elements.employeesTableBody, elements.employeesEmpty, employees);
+        renderEmployeesTable(elements.employeesTableBody, elements.employeesEmpty, employees, editEmployee);
         renderTaskStatus(elements.taskStatusList, elements.taskStatusEmpty, statusRows);
-        renderTasksTable(elements.tasksTableBody, elements.tasksEmpty, tasks);
+        renderTasksTable(elements.tasksTableBody, elements.tasksEmpty, tasks, editTask, deleteTask);
         renderAssignmentsTable(elements.assignmentsTableBody, elements.assignmentsEmpty, assignments);
     } catch (error) {
         if (!getToken()) {
@@ -165,11 +171,12 @@ async function loadDashboard() {
 async function createUser(event) {
     event.preventDefault();
     const formData = new FormData(elements.createUserForm);
+    const role = formData.get("role");
     await submitAndReload(API.users, {
         username: formData.get("username"),
         password: formData.get("password"),
-        role: formData.get("role")
-    }, elements.createUserForm, "Usuario creado");
+        role
+    }, elements.createUserForm, role === "EMPLOYEE" ? "Acceso creado y perfil de empleado generado" : "Acceso creado");
 }
 
 async function createSkill(event) {
@@ -180,50 +187,153 @@ async function createSkill(event) {
     }, elements.createSkillForm, "Skill creada");
 }
 
-async function createEmployee(event) {
+async function updateEmployee(event) {
     event.preventDefault();
     const formData = new FormData(elements.createEmployeeForm);
-    await submitAndReload(API.employees, {
+    const employeeId = elements.createEmployeeForm.dataset.editingId;
+    if (!employeeId) {
+        showError("Selecciona un empleado de la tabla para editarlo");
+        return;
+    }
+
+    const saved = await submitAndReload(`${API.employees}/${employeeId}`, {
         name: formData.get("name"),
         email: formData.get("email"),
         maxWeeklyHours: Number(formData.get("maxWeeklyHours")),
         currentWeeklyHours: Number(formData.get("currentWeeklyHours")),
         seniorityLevel: formData.get("seniorityLevel"),
         skillIds: formData.getAll("skillIds").map(Number)
-    }, elements.createEmployeeForm, "Empleado creado");
+    }, elements.createEmployeeForm, "Empleado actualizado", "PUT");
+    if (saved) {
+        resetEmployeeForm();
+    }
 }
 
 async function createTask(event) {
     event.preventDefault();
     const formData = new FormData(elements.createTaskForm);
-    await submitAndReload(API.tasks, {
+    const taskId = elements.createTaskForm.dataset.editingId;
+    const endpoint = taskId ? `${API.tasks}/${taskId}` : API.tasks;
+    const method = taskId ? "PUT" : "POST";
+
+    const saved = await submitAndReload(endpoint, {
         title: formData.get("title"),
         description: formData.get("description"),
         priority: formData.get("priority"),
         estimatedHours: Number(formData.get("estimatedHours")),
         deadline: formData.get("deadline"),
         requiredSkillIds: formData.getAll("requiredSkillIds").map(Number)
-    }, elements.createTaskForm, "Tarea creada");
+    }, elements.createTaskForm, taskId ? "Tarea actualizada" : "Tarea creada", method);
+    if (saved) {
+        resetTaskForm();
+    }
 }
 
-async function submitAndReload(endpoint, payload, form, successMessage) {
+async function submitAndReload(endpoint, payload, form, successMessage, method = "POST") {
     const submitButton = form.querySelector("button[type='submit']");
     const originalText = submitButton?.textContent;
     setButtonLoading(submitButton, true, "Guardando...");
 
     try {
         await apiFetch(endpoint, {
-            method: "POST",
+            method,
             body: JSON.stringify(payload)
         });
         form.reset();
         showSuccess(successMessage);
         await loadDashboard();
+        return true;
     } catch (error) {
         showError(error.message);
+        return false;
     } finally {
         setButtonLoading(submitButton, false, originalText || "Guardar");
     }
+}
+
+function editEmployee(employee) {
+    elements.createEmployeeForm.dataset.editingId = employee.id;
+    elements.createEmployeeForm.classList.remove("hidden");
+    elements.createEmployeeForm.elements.name.value = employee.name || "";
+    elements.createEmployeeForm.elements.email.value = employee.email || "";
+    elements.createEmployeeForm.elements.maxWeeklyHours.value = employee.maxWeeklyHours ?? 40;
+    elements.createEmployeeForm.elements.currentWeeklyHours.value = employee.currentWeeklyHours ?? 0;
+    elements.createEmployeeForm.elements.seniorityLevel.value = employee.seniorityLevel || "JUNIOR";
+    setCheckedOptions(elements.employeeSkillOptions, employee.skills);
+    elements.employeeSubmitButton.textContent = "Actualizar empleado";
+    elements.cancelEmployeeEditButton.classList.remove("hidden");
+    elements.createEmployeeForm.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function resetEmployeeForm() {
+    delete elements.createEmployeeForm.dataset.editingId;
+    elements.createEmployeeForm.reset();
+    clearCheckedOptions(elements.employeeSkillOptions);
+    elements.employeeSubmitButton.textContent = "Actualizar empleado";
+    elements.cancelEmployeeEditButton.classList.add("hidden");
+    elements.createEmployeeForm.classList.add("hidden");
+}
+
+function editTask(task) {
+    elements.createTaskForm.dataset.editingId = task.id;
+    elements.createTaskForm.elements.title.value = task.title || "";
+    elements.createTaskForm.elements.description.value = task.description || "";
+    elements.createTaskForm.elements.priority.value = task.priority || "MEDIUM";
+    elements.createTaskForm.elements.estimatedHours.value = task.estimatedHours ?? 4;
+    elements.createTaskForm.elements.deadline.value = task.deadline || "";
+    setCheckedOptions(elements.taskSkillOptions, task.requiredSkills);
+    elements.taskSubmitButton.textContent = "Actualizar tarea";
+    elements.cancelTaskEditButton.classList.remove("hidden");
+    elements.createTaskForm.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function deleteTask(taskId) {
+    if (!confirm("Seguro que quieres borrar esta tarea?")) {
+        return;
+    }
+
+    await deleteAndReload(`${API.tasks}/${taskId}`, "Tarea borrada");
+}
+
+function resetTaskForm() {
+    delete elements.createTaskForm.dataset.editingId;
+    elements.createTaskForm.reset();
+    elements.createTaskForm.elements.priority.value = "LOW";
+    elements.createTaskForm.elements.estimatedHours.value = 4;
+    clearCheckedOptions(elements.taskSkillOptions);
+    elements.taskSubmitButton.textContent = "Crear tarea";
+    elements.cancelTaskEditButton.classList.add("hidden");
+}
+
+async function deleteSkill(skillId) {
+    if (!confirm("Seguro que quieres borrar esta skill?")) {
+        return;
+    }
+
+    await deleteAndReload(`${API.skills}/${skillId}`, "Skill borrada");
+}
+
+async function deleteAndReload(endpoint, successMessage) {
+    try {
+        await apiFetch(endpoint, { method: "DELETE" });
+        showSuccess(successMessage);
+        await loadDashboard();
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+function setCheckedOptions(container, selectedItems = []) {
+    const selectedIds = new Set((selectedItems || []).map((item) => String(item.id)));
+    container.querySelectorAll("input[type='checkbox']").forEach((input) => {
+        input.checked = selectedIds.has(input.value);
+    });
+}
+
+function clearCheckedOptions(container) {
+    container.querySelectorAll("input[type='checkbox']").forEach((input) => {
+        input.checked = false;
+    });
 }
 
 async function updateMyTaskStatus(taskId, status) {
