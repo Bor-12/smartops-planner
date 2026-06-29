@@ -48,7 +48,14 @@ export async function apiFetch(endpoint, options = {}, includeAuth = true) {
     }
 
     if (!response.ok) {
-        throw new Error("No se pudo completar la operacion");
+        let message = "No se pudo completar la operacion";
+        try {
+            const error = await response.json();
+            message = error.message || error.error || message;
+        } catch {
+            // Keep the generic message when the response has no JSON body.
+        }
+        throw new Error(message);
     }
 
     if (response.status === 204) {

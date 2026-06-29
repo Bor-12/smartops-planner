@@ -511,7 +511,7 @@ td {
     color: var(--warning);
 }
 
-.priority.critical {
+.priority.urgent {
     background: rgba(180, 35, 24, 0.12);
     color: var(--danger);
 }

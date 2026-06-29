@@ -207,6 +207,10 @@ async function createTask(event) {
 }
 
 async function submitAndReload(endpoint, payload, form, successMessage) {
+    const submitButton = form.querySelector("button[type='submit']");
+    const originalText = submitButton?.textContent;
+    setButtonLoading(submitButton, true, "Guardando...");
+
     try {
         await apiFetch(endpoint, {
             method: "POST",
@@ -217,6 +221,8 @@ async function submitAndReload(endpoint, payload, form, successMessage) {
         await loadDashboard();
     } catch (error) {
         showError(error.message);
+    } finally {
+        setButtonLoading(submitButton, false, originalText || "Guardar");
     }
 }
 
@@ -226,7 +232,7 @@ async function updateMyTaskStatus(taskId, status) {
             method: "PATCH",
             body: JSON.stringify({ status })
         });
-        showSuccess("Estado actualizado");
+        showSuccess(status === "DONE" ? "Tarea completada" : "Tarea marcada como en progreso");
         await loadDashboard();
     } catch (error) {
         showError(error.message);
@@ -302,11 +308,13 @@ function firstVisibleViewId() {
 function showError(message, target = elements.globalMessage) {
     target.textContent = message || "No se pudo completar la operacion";
     target.className = target === elements.globalMessage ? "message global-message error" : "message error";
+    target.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function showSuccess(message, target = elements.globalMessage) {
     target.textContent = message || "Operacion completada";
     target.className = target === elements.globalMessage ? "message global-message success" : "message success";
+    target.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function clearMessage(target) {
@@ -315,6 +323,9 @@ function clearMessage(target) {
 }
 
 function setButtonLoading(button, loading, text) {
+    if (!button) {
+        return;
+    }
     button.disabled = loading;
     button.textContent = text;
 }

@@ -169,14 +169,17 @@ export function renderTasksTable(tableBody, emptyElement, tasks) {
 
 export function renderMyTasks(container, emptyElement, tasks, onStatusChange) {
     container.innerHTML = "";
-    const hasRows = Array.isArray(tasks) && tasks.length > 0;
+    const visibleTasks = Array.isArray(tasks)
+        ? tasks.filter((task) => task.status !== "DONE" && task.status !== "CANCELLED")
+        : [];
+    const hasRows = visibleTasks.length > 0;
     emptyElement.classList.toggle("hidden", hasRows);
 
     if (!hasRows) {
         return;
     }
 
-    container.innerHTML = tasks.map((task) => `
+    container.innerHTML = visibleTasks.map((task) => `
         <article class="task-card">
             <h3>${escapeHtml(task.title)}</h3>
             <p>${escapeHtml(task.description || "Sin descripcion")}</p>
@@ -188,7 +191,7 @@ export function renderMyTasks(container, emptyElement, tasks, onStatusChange) {
             </div>
             ${renderSkillTags(task.requiredSkills)}
             <div class="task-actions">
-                <button type="button" class="button secondary" data-task-status="${task.id}:IN_PROGRESS">Empezar</button>
+                <button type="button" class="button secondary" data-task-status="${task.id}:IN_PROGRESS" ${task.status === "IN_PROGRESS" ? "disabled" : ""}>Empezar</button>
                 <button type="button" class="button primary" data-task-status="${task.id}:DONE">Completar</button>
             </div>
         </article>
@@ -304,5 +307,5 @@ function permissionText(role) {
 
 function priorityClass(priority) {
     const value = String(priority || "").toLowerCase();
-    return ["low", "medium", "high", "critical"].includes(value) ? value : "medium";
+    return ["low", "medium", "high", "urgent"].includes(value) ? value : "medium";
 }
