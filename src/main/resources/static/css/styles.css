@@ -320,6 +320,11 @@ main {
     grid-column: span 2;
 }
 
+.compact-form {
+    grid-template-columns: minmax(240px, 420px) auto;
+    justify-content: start;
+}
+
 .checkbox-grid {
     display: flex;
     min-height: 42px;

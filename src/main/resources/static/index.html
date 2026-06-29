@@ -47,6 +47,7 @@
                 <button type="button" class="nav-link active" data-view-target="overviewView">Resumen</button>
                 <button type="button" class="nav-link" data-view-target="usersView">Usuarios</button>
                 <button type="button" class="nav-link" data-view-target="teamView">Empleados</button>
+                <button type="button" class="nav-link" data-view-target="skillsView">Skills</button>
                 <button type="button" class="nav-link" data-view-target="tasksView">Tareas</button>
                 <button type="button" class="nav-link" data-view-target="myTasksView">Mis tareas</button>
                 <button type="button" class="nav-link" data-view-target="planningView">Planificacion</button>
@@ -175,6 +176,33 @@
                         </table>
                     </div>
                     <p id="employeesEmpty" class="empty-state hidden">No hay empleados cargados.</p>
+                </section>
+
+                <section id="skillsView" class="view" aria-labelledby="skillsTitle">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">Catalogo</p>
+                            <h2 id="skillsTitle">Skills disponibles</h2>
+                        </div>
+                    </div>
+                    <form id="createSkillForm" class="form-panel compact-form">
+                        <div class="field wide">
+                            <label for="skillName">Nombre de la skill</label>
+                            <input id="skillName" name="name" type="text" placeholder="Java, Docker, PostgreSQL..." required>
+                        </div>
+                        <button type="submit" class="button primary">Crear skill</button>
+                    </form>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Skill</th>
+                                </tr>
+                            </thead>
+                            <tbody id="skillsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <p id="skillsEmpty" class="empty-state hidden">No hay skills cargadas.</p>
                 </section>
 
                 <section id="tasksView" class="view" aria-labelledby="taskStatusTitle">

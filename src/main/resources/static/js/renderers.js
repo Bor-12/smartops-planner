@@ -127,6 +127,22 @@ export function renderEmployeesTable(tableBody, emptyElement, employees) {
     }).join("");
 }
 
+export function renderSkillsTable(tableBody, emptyElement, skills) {
+    tableBody.innerHTML = "";
+    const hasRows = Array.isArray(skills) && skills.length > 0;
+    emptyElement.classList.toggle("hidden", hasRows);
+
+    if (!hasRows) {
+        return;
+    }
+
+    tableBody.innerHTML = skills.map((skill) => `
+        <tr>
+            <td><span class="tag">${escapeHtml(skill.name)}</span></td>
+        </tr>
+    `).join("");
+}
+
 export function renderTasksTable(tableBody, emptyElement, tasks) {
     tableBody.innerHTML = "";
     const hasRows = Array.isArray(tasks) && tasks.length > 0;

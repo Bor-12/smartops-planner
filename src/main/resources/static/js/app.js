@@ -7,6 +7,7 @@ import {
     renderMyTasks,
     renderPermissions,
     renderPlanningSummary,
+    renderSkillsTable,
     renderSkillOptions,
     renderTaskStatus,
     renderTasksTable,
@@ -17,6 +18,7 @@ const pageTitles = {
     overviewView: "Resumen",
     usersView: "Usuarios",
     teamView: "Empleados",
+    skillsView: "Skills",
     tasksView: "Tareas",
     myTasksView: "Mis tareas",
     planningView: "Planificacion"
@@ -33,6 +35,7 @@ const elements = {
     logoutButton: document.getElementById("logoutButton"),
     runPlanningButton: document.getElementById("runPlanningButton"),
     createUserForm: document.getElementById("createUserForm"),
+    createSkillForm: document.getElementById("createSkillForm"),
     createEmployeeForm: document.getElementById("createEmployeeForm"),
     createTaskForm: document.getElementById("createTaskForm"),
     navLinks: [...document.querySelectorAll("[data-view-target]")],
@@ -41,6 +44,8 @@ const elements = {
     permissionsGrid: document.getElementById("permissionsGrid"),
     usersTableBody: document.getElementById("usersTableBody"),
     usersEmpty: document.getElementById("usersEmpty"),
+    skillsTableBody: document.getElementById("skillsTableBody"),
+    skillsEmpty: document.getElementById("skillsEmpty"),
     employeeSkillOptions: document.getElementById("employeeSkillOptions"),
     employeesTableBody: document.getElementById("employeesTableBody"),
     employeesEmpty: document.getElementById("employeesEmpty"),
@@ -63,6 +68,7 @@ function init() {
     elements.logoutButton.addEventListener("click", logout);
     elements.runPlanningButton.addEventListener("click", runPlanning);
     elements.createUserForm.addEventListener("submit", createUser);
+    elements.createSkillForm.addEventListener("submit", createSkill);
     elements.createEmployeeForm.addEventListener("submit", createEmployee);
     elements.createTaskForm.addEventListener("submit", createTask);
     elements.navLinks.forEach((link) => {
@@ -141,6 +147,7 @@ async function loadDashboard() {
         if (getRole() === "ADMIN") {
             renderUsersTable(elements.usersTableBody, elements.usersEmpty, users);
         }
+        renderSkillsTable(elements.skillsTableBody, elements.skillsEmpty, skills);
         renderSkillOptions(elements.employeeSkillOptions, skills, "skillIds");
         renderSkillOptions(elements.taskSkillOptions, skills, "requiredSkillIds");
         renderEmployeesTable(elements.employeesTableBody, elements.employeesEmpty, employees);
@@ -163,6 +170,14 @@ async function createUser(event) {
         password: formData.get("password"),
         role: formData.get("role")
     }, elements.createUserForm, "Usuario creado");
+}
+
+async function createSkill(event) {
+    event.preventDefault();
+    const formData = new FormData(elements.createSkillForm);
+    await submitAndReload(API.skills, {
+        name: formData.get("name")
+    }, elements.createSkillForm, "Skill creada");
 }
 
 async function createEmployee(event) {
@@ -265,8 +280,8 @@ function showApp() {
 function applyRoleVisibility() {
     const role = getRole();
     const allowedViews = {
-        ADMIN: ["overviewView", "usersView", "teamView", "tasksView", "planningView"],
-        MANAGER: ["overviewView", "teamView", "tasksView", "planningView"],
+        ADMIN: ["overviewView", "usersView", "teamView", "skillsView", "tasksView", "planningView"],
+        MANAGER: ["overviewView", "teamView", "skillsView", "tasksView", "planningView"],
         EMPLOYEE: ["myTasksView"]
     };
     const allowed = allowedViews[role] || ["overviewView"];

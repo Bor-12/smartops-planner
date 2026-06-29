@@ -2,6 +2,7 @@ package com.smartops.planner.user;
 
 import com.smartops.planner.auth.dto.RegisterRequest;
 import com.smartops.planner.common.exception.BadRequestException;
+import com.smartops.planner.employee.EmployeeProfileProvisioner;
 import com.smartops.planner.user.dto.UserResponse;
 import java.util.Comparator;
 import java.util.List;
@@ -15,10 +16,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmployeeProfileProvisioner employeeProfileProvisioner;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            EmployeeProfileProvisioner employeeProfileProvisioner
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.employeeProfileProvisioner = employeeProfileProvisioner;
     }
 
     @Transactional(readOnly = true)
@@ -42,6 +49,7 @@ public class UserService {
                 passwordEncoder.encode(request.password()),
                 request.role()
         ));
+        employeeProfileProvisioner.createProfileForEmployeeUserIfMissing(user);
 
         return toResponse(user);
     }
