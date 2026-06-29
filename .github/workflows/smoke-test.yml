@@ -1,0 +1,35 @@
+name: Smoke Test
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Docker
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+env:
+  APP_URL: https://smartops-planner-app.greenplant-438e2705.francecentral.azurecontainerapps.io
+
+jobs:
+  smoke-test:
+    name: Check Azure deployment
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Wait for Container Apps warm-up
+        run: sleep 20
+
+      - name: Check public web
+        run: |
+          curl --fail --silent --show-error --location "$APP_URL/" > /tmp/smartops-home.html
+          grep -q "SmartOps Planner" /tmp/smartops-home.html
+
+      - name: Check health endpoint
+        run: |
+          response="$(curl --fail --silent --show-error --location "$APP_URL/api/health")"
+          test "$response" = "OK"
