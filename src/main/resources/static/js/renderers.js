@@ -1,18 +1,27 @@
 import { clamp, escapeHtml, formatDate, formatNumber } from "./format.js";
 
+function formatPlanningStatus(status) {
+    const labels = {
+        RUNNING: "En ejecucion",
+        COMPLETED: "Completada",
+        FAILED: "Fallida"
+    };
+
+    return labels[status] || "Sin datos";
+}
+
 export function renderMetricCards(container, summary) {
     const metrics = [
-        ["Tareas asignadas", summary.assignedTasks ?? 0],
-        ["Tareas pendientes", summary.pendingTasks ?? 0],
-        ["Criticas pendientes", summary.criticalPendingTasks ?? 0],
-        ["Score medio", formatNumber(summary.averageAssignmentScore ?? 0)],
-        ["Ultima ejecucion", summary.latestPlanningRunStatus || "Sin datos"]
+        { label: "Tareas asignadas", value: summary.assignedTasks ?? 0 },
+        { label: "Tareas pendientes", value: summary.pendingTasks ?? 0 },
+        { label: "Criticas pendientes", value: summary.criticalPendingTasks ?? 0 },
+        { label: "Score medio", value: formatNumber(summary.averageAssignmentScore ?? 0) }
     ];
 
-    container.innerHTML = metrics.map(([label, value]) => `
+    container.innerHTML = metrics.map((metric) => `
         <article class="metric-card">
-            <span>${escapeHtml(label)}</span>
-            <strong>${escapeHtml(String(value))}</strong>
+            <span>${escapeHtml(metric.label)}</span>
+            <strong>${escapeHtml(String(metric.value))}</strong>
         </article>
     `).join("");
 }
@@ -23,7 +32,7 @@ export function renderPlanningSummary(container, summary, runs) {
     );
     const latestRun = sortedRuns[0];
     const latestText = latestRun
-        ? `${latestRun.status} - ${formatDate(latestRun.finishedAt || latestRun.startedAt)}`
+        ? `${formatPlanningStatus(latestRun.status)} - ${formatDate(latestRun.finishedAt || latestRun.startedAt)}`
         : "Sin ejecuciones";
 
     container.innerHTML = `
@@ -32,7 +41,7 @@ export function renderPlanningSummary(container, summary, runs) {
             <strong>${escapeHtml(latestText)}</strong>
         </article>
         <article class="summary-item">
-            <span>Total runs</span>
+            <span>Ejecuciones</span>
             <strong>${sortedRuns.length}</strong>
         </article>
         <article class="summary-item">
@@ -83,7 +92,7 @@ export function renderPermissions(container, role) {
     const permissions = [
         ["ADMIN", "Gestiona usuarios, empleados, skills, tareas, dashboard y planificacion"],
         ["MANAGER", "Gestiona empleados, skills, tareas, dashboard y planificacion"],
-        ["EMPLOYEE", "Consulta sus tareas asignadas cuando exista endpoint de mis tareas"]
+        ["EMPLOYEE", "Consulta sus tareas asignadas y actualiza su estado"]
     ];
 
     container.innerHTML = permissions.map(([name, description]) => `
