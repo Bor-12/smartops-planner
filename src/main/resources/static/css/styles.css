@@ -200,10 +200,8 @@ input[readonly] {
 }
 
 .brand-mini {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     margin-bottom: 28px;
+    padding: 6px 2px;
 }
 
 .brand-mini strong,
@@ -214,16 +212,6 @@ input[readonly] {
 .brand-mini span {
     color: #cbd5e1;
     font-size: 13px;
-}
-
-.brand-mark {
-    display: grid;
-    width: 40px;
-    height: 40px;
-    place-items: center;
-    border-radius: 8px;
-    background: var(--primary);
-    font-weight: 800;
 }
 
 .nav-menu {
@@ -381,7 +369,7 @@ main {
 
 .metric-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -405,6 +393,7 @@ main {
     margin-top: 12px;
     font-size: 28px;
     letter-spacing: 0;
+    overflow-wrap: anywhere;
 }
 
 .summary-strip,
