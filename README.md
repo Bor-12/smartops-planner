@@ -1,8 +1,12 @@
 # SmartOps Planner
 
-API backend en Spring Boot para planificacion operativa. Gestiona usuarios, empleados, skills, tareas y ejecuciones de planificacion. Incluye una interfaz web sencilla por roles.
+Aplicacion web con backend Spring Boot para planificacion operativa. Permite gestionar accesos, empleados, skills y tareas, ejecutar una planificacion automatica y consultar las tareas asignadas segun el rol del usuario.
 
-## Stack
+El proyecto esta pensado como una simulacion de un entorno de trabajo real: un administrador crea accesos, los empleados tienen un perfil operativo con skills y disponibilidad, los usuarios con rol `MANAGER` crean tareas con requisitos y el sistema calcula asignaciones teniendo en cuenta skills, carga semanal, prioridad y fecha limite.
+
+![Vista principal de SmartOps Planner](docs/smartops-planner-dashboard.png)
+
+## Tecnologias
 
 - Java 21
 - Spring Boot 3.5
@@ -18,23 +22,42 @@ API backend en Spring Boot para planificacion operativa. Gestiona usuarios, empl
 
 - Login con JWT.
 - Roles `ADMIN`, `MANAGER` y `EMPLOYEE`.
-- Gestion de usuarios, empleados, skills y tareas.
-- Planificacion automatica de tareas.
-- Asignaciones con explicacion.
-- Vista de tareas propias para empleados.
-- Dashboard operativo.
+- Gestion de accesos de usuario.
+- Creacion automatica del perfil de empleado al crear un acceso `EMPLOYEE`.
+- Gestion de empleados, skills y tareas desde el panel.
+- Edicion y eliminacion de skills y tareas.
+- Planificacion automatica de tareas segun skills, carga de trabajo, prioridad y fecha limite.
+- Asignaciones con puntuacion y explicacion.
+- Documentacion del algoritmo de asignacion en `src/main/java/com/smartops/planner/planning/scoring-algorithm.md`.
+- Vista de tareas propias para empleados, con cambio de estado.
+- Panel operativo con resumen de planificacion.
+- Interfaz web estatica servida por Spring Boot.
 - Tests de servicios, controllers, seguridad e integracion.
-- Dockerfile multi-stage.
+- Dockerfile dividido en fase de construccion y fase de ejecucion.
 - Docker Compose con PostgreSQL y app.
-- GitHub Actions para CI y build Docker.
+- GitHub Actions para CI, construccion de imagen Docker y despliegue continuo en Azure.
+
+## Flujo Principal
+
+1. El `ADMIN` crea accesos para usuarios `MANAGER` y `EMPLOYEE`.
+2. Cuando se crea un acceso con rol `EMPLOYEE`, se genera tambien su perfil de empleado.
+3. El `ADMIN` o `MANAGER` completa los datos operativos del empleado: nivel, horas disponibles y skills.
+4. El `ADMIN` o `MANAGER` crea skills y tareas con prioridad, horas estimadas, fecha limite y skills requeridas.
+5. Se ejecuta la planificacion para asignar tareas al empleado mas adecuado.
+6. Cada `EMPLOYEE` entra en su panel, revisa sus tareas y puede marcarlas como `IN_PROGRESS` o `DONE`.
+7. El panel de resumen muestra el estado general de la planificacion.
+
+![Planificacion de tareas en SmartOps Planner](docs/smartops-planner-planning.png)
 
 ## Roles
 
 | Rol | Puede hacer |
 |---|---|
-| `ADMIN` | Usuarios, empleados, skills, tareas, dashboard y planificacion |
-| `MANAGER` | Empleados, skills, tareas, dashboard y planificacion |
+| `ADMIN` | Accesos, empleados, skills, tareas, resumen y planificacion |
+| `MANAGER` | Empleados, skills, tareas, resumen y planificacion |
 | `EMPLOYEE` | Ver sus tareas asignadas y cambiar su estado |
+
+![Vista de tareas asignadas a un empleado](docs/smartops-planner-my-tasks.png)
 
 ## Usuarios Demo
 
@@ -81,7 +104,7 @@ Abrir:
 http://localhost:8080
 ```
 
-Comprobar health:
+Comprobar que la app responde:
 
 ```powershell
 curl http://localhost:8080/api/health
@@ -118,20 +141,20 @@ docker-compose.yml
 
 El `Dockerfile` construye la app en dos fases:
 
-- fase build: Maven + Java 21
-- fase runtime: JRE ligero para ejecutar el `.jar`
+- fase de construccion: Maven + Java 21
+- fase de ejecucion: JRE ligero para ejecutar el `.jar`
 
 `docker-compose.yml` puede levantar:
 
 - `postgres`
 - `app` + `postgres` usando `--profile app`
 
-Los servicios tienen healthcheck:
+Los servicios tienen comprobaciones de estado:
 
 - PostgreSQL usa `pg_isready`
 - la app usa `/api/health`
 
-No subas `.env` al repositorio. Usa `.env.example` como plantilla.
+La configuracion local parte de `.env.example`, que documenta las variables necesarias para ejecutar la aplicacion con Docker Compose.
 
 ## Seguridad
 
@@ -153,19 +176,31 @@ El secreto JWT se configura con:
 APP_SECURITY_JWT_SECRET
 ```
 
+Para crear el primer administrador en una base de datos nueva se pueden usar:
+
+```text
+APP_INITIAL_ADMIN_USERNAME
+APP_INITIAL_ADMIN_PASSWORD
+```
+
+Estas variables son opcionales. Si no existen, la aplicacion no crea ningun usuario automaticamente. En local, los usuarios demo se cargan solo con el perfil `dev`.
+
 ## Endpoints Principales
 
 | Metodo | Endpoint | Descripcion |
 |---|---|---|
 | `POST` | `/api/auth/login` | Login |
 | `GET` | `/api/users` | Listar usuarios |
-| `POST` | `/api/users` | Crear usuario |
+| `POST` | `/api/users` | Crear acceso de usuario |
 | `GET` | `/api/employees` | Listar empleados |
-| `POST` | `/api/employees` | Crear empleado |
+| `PUT` | `/api/employees/{id}` | Actualizar perfil operativo de empleado |
 | `GET` | `/api/skills` | Listar skills |
 | `POST` | `/api/skills` | Crear skill |
+| `DELETE` | `/api/skills/{id}` | Eliminar skill |
 | `GET` | `/api/tasks` | Listar tareas |
 | `POST` | `/api/tasks` | Crear tarea |
+| `PUT` | `/api/tasks/{id}` | Actualizar tarea |
+| `DELETE` | `/api/tasks/{id}` | Eliminar tarea |
 | `PATCH` | `/api/tasks/{id}/status` | Cambiar estado |
 | `POST` | `/api/planning/run` | Ejecutar planificacion |
 | `GET` | `/api/planning/assignments` | Ver asignaciones |
@@ -178,6 +213,8 @@ Swagger:
 ```text
 http://localhost:8080/swagger-ui.html
 ```
+
+La documentacion de la API se genera automaticamente con OpenAPI y se puede consultar desde Swagger UI.
 
 ## Tests
 
@@ -200,17 +237,62 @@ Workflows:
 
 | Workflow | Archivo | Hace |
 |---|---|---|
-| `CI` | `.github/workflows/tests.yml` | Tests, build del JAR y artifact |
-| `Docker` | `.github/workflows/docker-build.yml` | Build de imagen Docker |
+| `CI` | `.github/workflows/tests.yml` | Tests y generacion del JAR |
+| `Docker` | `.github/workflows/docker-build.yml` | Construccion y publicacion de la imagen Docker, mas despliegue en Azure Container Apps |
+| `Smoke Test` | `.github/workflows/smoke-test.yml` | Comprueba que la aplicacion desplegada en Azure responde |
 
-El workflow de Docker publica en Docker Hub si existen estos secrets:
+El workflow de Docker publica la imagen en Docker Hub si estan configurados estos GitHub Secrets:
 
 ```text
 DOCKERHUB_USERNAME
 DOCKERHUB_TOKEN
 ```
 
-Si no existen, solo construye la imagen para validar el `Dockerfile`.
+Para el despliegue continuo en Azure tambien necesita:
+
+```text
+AZURE_CLIENT_ID
+AZURE_TENANT_ID
+AZURE_SUBSCRIPTION_ID
+AZURE_RESOURCE_GROUP
+```
+
+El despliegue continuo esta configurado para que GitHub Actions pueda actualizar la Container App de Azure automaticamente. Para ello se usa una identidad de Azure asociada al repositorio mediante OIDC. En cada push a `main`, el workflow:
+
+1. Construye la imagen Docker.
+2. Publica la imagen en Docker Hub con tag `latest` y con el hash del commit.
+3. Hace login en Azure con `azure/login`.
+4. Actualiza la Container App para usar la imagen generada en ese commit.
+
+Cuando el workflow `Docker` termina correctamente, se ejecuta el workflow `Smoke Test`. Este workflow hace una comprobacion HTTP contra la URL publica de Azure y valida que `/api/health` responde `OK`.
+
+El workflow `Smoke Test` tambien se puede lanzar manualmente desde la pestana `Actions` de GitHub.
+
+Los cambios de documentacion (`README.md` y otros `.md`) no disparan el despliegue, porque los workflows tienen `paths-ignore` para archivos Markdown.
+
+## Despliegue En Azure
+
+La aplicacion esta desplegada en Azure Container Apps usando Azure for Students. El despliegue continuo se ejecuta desde GitHub Actions en cada push a `main`.
+
+URL publica:
+
+```text
+https://smartops-planner-app.greenplant-438e2705.francecentral.azurecontainerapps.io/
+```
+
+Esta URL permite comprobar la aplicacion desplegada sin necesidad de tener acceso a la cuenta de Azure. Los comandos `az` solo funcionan con una cuenta que tenga permisos sobre la suscripcion.
+
+Servicios de Azure usados:
+
+| Recurso | Nombre | Uso |
+|---|---|---|
+| Resource group | `smartops-group` | Agrupa los servicios del proyecto en Azure |
+| Container App | `smartops-planner-app` | Ejecuta la imagen Docker de la aplicacion |
+| Container Apps environment | `smartops-planner-app-env` | Entorno de ejecucion de Container Apps |
+| PostgreSQL Flexible Server | `smartops-pg-borjagr12` | Base de datos en Azure |
+| Database | `smartops` | Base de datos usada por Spring Boot |
+| Managed Identity | `GitHubUser` | Identidad usada por GitHub Actions |
+| Federated credential | `GitHubSmartopsMain` | Permite login OIDC desde `Bor-12/smartops-planner` en `main` |
 
 ## Base De Datos
 
@@ -233,30 +315,4 @@ Resetear base local:
 ```powershell
 docker compose down -v
 docker compose up -d postgres
-```
-
-## Estructura
-
-```text
-src/main/java/com/smartops/planner
-+-- auth
-+-- user
-+-- security
-+-- employee
-+-- skill
-+-- task
-+-- planning
-+-- dashboard
-+-- common
-+-- config
-+-- web
-```
-
-Interfaz:
-
-```text
-src/main/resources/static
-+-- index.html
-+-- css/styles.css
-+-- js/
 ```
