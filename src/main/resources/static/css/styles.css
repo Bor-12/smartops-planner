@@ -19,9 +19,16 @@
     box-sizing: border-box;
 }
 
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     margin: 0;
+    width: 100%;
     min-height: 100vh;
+    overflow-x: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -118,6 +125,10 @@ select {
     color: var(--text);
 }
 
+input::placeholder {
+    color: #98a2b3;
+}
+
 input:focus,
 select:focus,
 .button:focus-visible,
@@ -133,6 +144,7 @@ select:focus,
     border-radius: 6px;
     cursor: pointer;
     font-weight: 750;
+    text-align: center;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -188,6 +200,7 @@ input[readonly] {
     min-height: 100vh;
     display: grid;
     grid-template-columns: 248px minmax(0, 1fr);
+    width: 100%;
 }
 
 .sidebar {
@@ -286,6 +299,7 @@ main {
 
 .view {
     display: none;
+    min-width: 0;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -374,6 +388,7 @@ main {
 }
 
 .metric-card {
+    min-width: 0;
     min-height: 118px;
     padding: 16px;
     border: 1px solid var(--line);
@@ -410,6 +425,7 @@ main {
 
 .summary-item,
 .permission-card {
+    min-width: 0;
     padding: 14px;
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -436,11 +452,13 @@ main {
 
 .permission-card strong {
     line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 
 .table-wrap {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -557,6 +575,7 @@ td {
 
 .task-card,
 .algorithm-card {
+    min-width: 0;
     padding: 16px;
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -641,6 +660,10 @@ td {
     margin-bottom: 16px;
 }
 
+.global-message:empty {
+    display: none;
+}
+
 .message.error {
     color: var(--danger);
 }
@@ -659,21 +682,55 @@ td {
 }
 
 @media (max-width: 1040px) {
+    body {
+        overflow-x: hidden;
+    }
+
     .app-shell {
         grid-template-columns: 1fr;
+        max-width: 100vw;
+    }
+
+    .sidebar,
+    .workspace,
+    main,
+    .view {
+        width: 100%;
+        max-width: 100%;
     }
 
     .sidebar {
-        position: static;
+        position: sticky;
+        top: 0;
+        z-index: 30;
         height: auto;
+        padding: 12px 14px;
+        box-shadow: 0 8px 22px rgba(16, 24, 40, 0.16);
+    }
+
+    .brand-mini {
+        margin-bottom: 10px;
+        padding: 0;
     }
 
     .nav-menu {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        width: 100%;
+        max-width: calc(100vw - 28px);
+        padding: 0 0 2px;
+        scrollbar-width: thin;
     }
 
     .nav-link {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 0;
+        min-height: 36px;
+        padding: 8px 12px;
         text-align: center;
+        white-space: nowrap;
     }
 
     .metric-grid,
@@ -687,6 +744,10 @@ td {
     .form-panel {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .compact-form {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
 }
 
 @media (max-width: 720px) {
@@ -699,21 +760,87 @@ td {
         font-size: 28px;
     }
 
-    .topbar,
+    .sidebar {
+        padding: 10px;
+    }
+
+    .brand-mini {
+        margin-bottom: 10px;
+    }
+
+    .brand-mini strong {
+        font-size: 18px;
+        line-height: 1.15;
+    }
+
+    .brand-mini span {
+        font-size: 12px;
+    }
+
+    .nav-menu {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        max-width: 100%;
+    }
+
+    .nav-link {
+        flex: 1 1 calc(33.333% - 8px);
+        min-height: 34px;
+        padding: 7px 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .topbar {
+        position: static;
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .topbar h1 {
+        font-size: 22px;
+    }
+
     .view-heading {
         align-items: flex-start;
         flex-direction: column;
     }
 
     .session-box {
-        width: 100%;
+        width: auto;
         flex-wrap: wrap;
+        margin-left: 0;
     }
 
-    .nav-menu,
-    .metric-grid,
+    .user-badge {
+        flex: 0 1 auto;
+        justify-content: center;
+        min-height: 32px;
+        font-size: 13px;
+        max-width: 100%;
+    }
+
+    .button.ghost {
+        flex: 0 1 auto;
+        min-height: 32px;
+        padding: 7px 10px;
+        font-size: 13px;
+        max-width: 100%;
+    }
+
+    .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
     .summary-strip,
-    .permissions-grid,
+    .permissions-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .task-card-grid,
     .algorithm-grid,
     .form-panel {
@@ -724,16 +851,269 @@ td {
         grid-column: auto;
     }
 
+    .form-panel {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .form-panel .button,
+    .compact-form .button,
+    .task-actions .button,
+    .row-actions .button {
+        width: 100%;
+    }
+
+    .row-actions,
+    .task-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    input,
+    select,
+    .button {
+        min-width: 0;
+    }
+
     main {
-        padding: 18px 14px 36px;
+        width: 100%;
+        padding: 10px 8px 28px;
     }
 
     .view {
-        padding: 18px;
+        padding: 14px;
+    }
+
+    .view-heading h2 {
+        font-size: 18px;
+    }
+
+    .metric-card {
+        min-height: 78px;
+        padding: 11px;
+    }
+
+    .metric-card span,
+    .summary-item span,
+    .permission-card span {
+        font-size: 12px;
+    }
+
+    .metric-card strong {
+        margin-top: 8px;
+        font-size: 21px;
+    }
+
+    .summary-item,
+    .permission-card,
+    .task-card,
+    .algorithm-card {
+        padding: 12px;
+    }
+
+    .table-wrap {
+        overflow-x: visible;
+    }
+
+    table {
+        min-width: 0;
+    }
+
+    table,
+    thead,
+    tbody,
+    tr,
+    th,
+    td {
+        display: block;
+        width: 100%;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody {
+        display: grid;
+        gap: 10px;
+    }
+
+    tr {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+
+    td {
+        display: grid;
+        grid-template-columns: minmax(86px, 34%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(216, 225, 236, 0.72);
+    }
+
+    td:last-child {
+        border-bottom: 0;
+    }
+
+    td::before {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    #usersView td:nth-child(1)::before {
+        content: "Usuario";
+    }
+
+    #usersView td:nth-child(2)::before {
+        content: "Rol";
+    }
+
+    #usersView td:nth-child(3)::before {
+        content: "Puede hacer";
+    }
+
+    #teamView td:nth-child(1)::before {
+        content: "Empleado";
+    }
+
+    #teamView td:nth-child(2)::before {
+        content: "Seniority";
+    }
+
+    #teamView td:nth-child(3)::before {
+        content: "Skills";
+    }
+
+    #teamView td:nth-child(4)::before {
+        content: "Horas";
+    }
+
+    #teamView td:nth-child(5)::before {
+        content: "Uso";
+    }
+
+    #teamView td:nth-child(6)::before {
+        content: "Acciones";
+    }
+
+    #skillsView td:nth-child(1)::before {
+        content: "Skill";
+    }
+
+    #skillsView td:nth-child(2)::before {
+        content: "Acciones";
+    }
+
+    #tasksView td:nth-child(1)::before {
+        content: "Tarea";
+    }
+
+    #tasksView td:nth-child(2)::before {
+        content: "Prioridad";
+    }
+
+    #tasksView td:nth-child(3)::before {
+        content: "Estado";
+    }
+
+    #tasksView td:nth-child(4)::before {
+        content: "Horas";
+    }
+
+    #tasksView td:nth-child(5)::before {
+        content: "Deadline";
+    }
+
+    #tasksView td:nth-child(6)::before {
+        content: "Skills";
+    }
+
+    #tasksView td:nth-child(7)::before {
+        content: "Acciones";
+    }
+
+    #planningView td:nth-child(1)::before {
+        content: "Tarea";
+    }
+
+    #planningView td:nth-child(2)::before {
+        content: "Empleado";
+    }
+
+    #planningView td:nth-child(3)::before {
+        content: "Score";
+    }
+
+    #planningView td:nth-child(4)::before {
+        content: "Asignada";
+    }
+
+    #planningView td:nth-child(5)::before {
+        content: "Explicacion";
     }
 
     .status-row {
         grid-template-columns: 1fr;
         gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-mini strong {
+        font-size: 18px;
+    }
+
+    .brand-mini span,
+    .nav-link,
+    .user-badge,
+    .button.ghost {
+        font-size: 12px;
+    }
+
+    .nav-link {
+        flex-basis: calc(50% - 8px);
+    }
+
+    .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .summary-strip,
+    .permissions-grid,
+    .row-actions,
+    .task-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .topbar h1 {
+        font-size: 20px;
+    }
+
+    .view {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .metric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .session-box {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .user-badge,
+    .button.ghost {
+        width: 100%;
     }
 }

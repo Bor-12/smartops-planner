@@ -19,12 +19,12 @@
             <form id="loginForm" class="login-form" aria-describedby="loginMessage">
                 <div class="field">
                     <label for="username">Usuario</label>
-                    <input id="username" name="username" type="text" autocomplete="username" required>
+                    <input id="username" name="username" type="text" autocomplete="username" placeholder="Introduce tu usuario" required>
                 </div>
 
                 <div class="field">
                     <label for="password">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                    <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Introduce tu password" required>
                 </div>
 
                 <button type="submit" class="button primary">Iniciar sesion</button>
@@ -56,7 +56,7 @@
         <div class="workspace">
             <header class="topbar">
                 <div>
-                    <p class="eyebrow">Panel operativo</p>
+                    <p class="eyebrow">Dashboard</p>
                     <h1 id="pageTitle">Resumen</h1>
                 </div>
                 <div class="session-box">
@@ -90,11 +90,11 @@
                     <form id="createUserForm" class="form-panel">
                         <div class="field">
                             <label for="newUsername">Usuario</label>
-                            <input id="newUsername" name="username" type="text" required>
+                            <input id="newUsername" name="username" type="text" placeholder="manager1, ana.garcia..." required>
                         </div>
                         <div class="field">
                             <label for="newUserPassword">Password</label>
-                            <input id="newUserPassword" name="password" type="password" minlength="8" required>
+                            <input id="newUserPassword" name="password" type="password" minlength="8" placeholder="Minimo 8 caracteres" required>
                         </div>
                         <div class="field">
                             <label for="newUserRole">Rol</label>
@@ -132,19 +132,19 @@
                     <form id="createEmployeeForm" class="form-panel hidden">
                         <div class="field">
                             <label for="employeeName">Nombre</label>
-                            <input id="employeeName" name="name" type="text" required>
+                            <input id="employeeName" name="name" type="text" placeholder="Ana Garcia" required>
                         </div>
                         <div class="field">
                             <label for="employeeEmail">Email</label>
-                            <input id="employeeEmail" name="email" type="email" readonly required>
+                            <input id="employeeEmail" name="email" type="email" placeholder="ana.garcia@smartops.demo" readonly required>
                         </div>
                         <div class="field">
                             <label for="employeeMaxHours">Horas max.</label>
-                            <input id="employeeMaxHours" name="maxWeeklyHours" type="number" min="1" value="40" required>
+                            <input id="employeeMaxHours" name="maxWeeklyHours" type="number" min="1" value="40" placeholder="40" required>
                         </div>
                         <div class="field">
                             <label for="employeeCurrentHours">Horas actuales</label>
-                            <input id="employeeCurrentHours" name="currentWeeklyHours" type="number" min="0" value="0" required>
+                            <input id="employeeCurrentHours" name="currentWeeklyHours" type="number" min="0" value="0" placeholder="0" required>
                         </div>
                         <div class="field">
                             <label for="employeeSeniority">Seniority</label>
@@ -218,11 +218,11 @@
                     <form id="createTaskForm" class="form-panel">
                         <div class="field wide">
                             <label for="taskTitle">Titulo</label>
-                            <input id="taskTitle" name="title" type="text" required>
+                            <input id="taskTitle" name="title" type="text" placeholder="Optimizar consultas SQL" required>
                         </div>
                         <div class="field wide">
                             <label for="taskDescription">Descripcion</label>
-                            <input id="taskDescription" name="description" type="text">
+                            <input id="taskDescription" name="description" type="text" placeholder="Breve descripcion de la tarea">
                         </div>
                         <div class="field">
                             <label for="taskPriority">Prioridad</label>
@@ -235,11 +235,11 @@
                         </div>
                         <div class="field">
                             <label for="taskHours">Horas</label>
-                            <input id="taskHours" name="estimatedHours" type="number" min="1" value="4" required>
+                            <input id="taskHours" name="estimatedHours" type="number" min="1" value="4" placeholder="6" required>
                         </div>
                         <div class="field">
                             <label for="taskDeadline">Deadline</label>
-                            <input id="taskDeadline" name="deadline" type="date" required>
+                            <input id="taskDeadline" name="deadline" type="date" title="Selecciona la fecha limite de la tarea" required>
                         </div>
                         <div class="field wide">
                             <label>Skills requeridas</label>

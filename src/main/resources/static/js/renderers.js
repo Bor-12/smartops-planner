@@ -90,8 +90,8 @@ export function renderUsersTable(tableBody, emptyElement, users) {
 
 export function renderPermissions(container, role) {
     const permissions = [
-        ["ADMIN", "Gestiona usuarios, empleados, skills, tareas, dashboard y planificacion"],
-        ["MANAGER", "Gestiona empleados, skills, tareas, dashboard y planificacion"],
+        ["ADMIN", "Gestion completa del panel"],
+        ["MANAGER", "Gestion operativa y planificacion"],
         ["EMPLOYEE", "Consulta sus tareas asignadas y actualiza su estado"]
     ];
 
