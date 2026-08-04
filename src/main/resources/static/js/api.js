@@ -40,7 +40,7 @@ export async function apiFetch(endpoint, options = {}, includeAuth = true) {
             throw new Error("Sesion caducada o no autenticada");
         }
 
-        throw new Error("Usuario o password incorrectos");
+        throw new Error("Usuario o contraseña incorrectos");
     }
 
     if (response.status === 403) {
